@@ -42,57 +42,81 @@ app.get('/signUp.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'signUp.html'));
 });
 
-// User Sign-Up
-app.post('/signup', (req, res) => {
-    const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-        return res.status(400).json({ message: "All fields are required", success: false });
+// Dummy in-memory "database" of users
+let users = [];
+
+// Sign-up function
+app.post('/signup', (req, res) => {
+    const { userEmail, password, confirmPassword } = req.body;
+
+    // Validate inputs
+    if (!userEmail || !password || !confirmPassword) {
+        return res.status(400).json({ message: "Missing email or password fields", success: false });
+    }
+    
+    if (password !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match", success: false });
     }
 
-    // Check if email already exists
-    const checkUserSQL = 'SELECT userID FROM users WHERE userEmail = ?';
-    db.query(checkUserSQL, [email], (err, result) => {
+    // Check if the email already exists
+    const checkUserSQL = "SELECT * FROM users WHERE userEmail = ?";
+    db.query(checkUserSQL, [userEmail], (err, results) => {
         if (err) {
-            console.error(err);
+            console.error("Database error on checking user:", err);
             return res.status(500).json({ message: "Database error", success: false });
         }
-
-        if (result.length > 0) {
+        
+        if (results.length > 0) {
             return res.status(400).json({ message: "Email already exists", success: false });
         }
 
-        // Insert new user
-        const insertUserSQL = 'INSERT INTO users (userEmail, password, name) VALUES (?, ?, ?)';
-        db.query(insertUserSQL, [email, password, name], (err, result) => {
+        // Insert new user (note: consider hashing the password in production)
+        const insertSQL = "INSERT INTO users (userEmail, password) VALUES (?, ?)";
+        db.query(insertSQL, [userEmail, password], (err, result) => {
             if (err) {
-                console.error(err);
+                console.error("Error inserting user:", err);
                 return res.status(500).json({ message: "Database error", success: false });
             }
 
-            res.status(201).json({ message: "Sign-up successful!", success: true });
+            res.status(200).json({ 
+              message: "Sign-up successful", 
+              userID: result.insertId, 
+              success: true 
+            });
         });
     });
 });
 
-// User Login
-app.post('/login', (req, res) => {
-    const { email, password } = req.body;
 
-    const sql = 'SELECT userID FROM users WHERE userEmail = ? AND password = ?';
-    db.query(sql, [email, password], (err, result) => {
+// Login function
+app.post('/login', (req, res) => {
+    const { userEmail, password } = req.body;
+
+    if (!userEmail || !password) {
+        return res.status(400).json({ message: "Missing email or password", success: false });
+    }
+
+    const sql = "SELECT * FROM users WHERE userEmail = ? AND password = ?";
+    db.query(sql, [userEmail, password], (err, results) => {
         if (err) {
-            console.error(err);
+            console.error("Database error on login:", err);
             return res.status(500).json({ message: "Database error", success: false });
         }
 
-        if (result.length > 0) {
-            res.status(200).json({ message: "Login successful", success: true, userID: result[0].userID });
+        if (results.length > 0) {
+            // Successful login; results[0].userID holds the user's ID.
+            return res.status(200).json({ 
+              message: "Login successful", 
+              userID: results[0].userID,
+              success: true 
+            });
         } else {
-            res.status(401).json({ message: "Invalid credentials", success: false });
+            return res.status(401).json({ message: "Invalid credentials", success: false });
         }
     });
 });
+
 
 
 // **Add a Todo (Default `currStatus = 0` for Incomplete)**
@@ -131,8 +155,7 @@ app.post('/add-todo', (req, res) => {
 app.put('/complete-todo/:id', (req, res) => {
     const todoID = req.params.id;
 
-    console.log(`Updating todo ID: ${todoID}`); // ✅ Debugging log
-
+    console.log(`Updating todo ID: ${todoID}`); 
     const sql = 'UPDATE todo SET currStatus = 1 WHERE id = ?';
 
     db.query(sql, [todoID], (err, result) => {
@@ -142,7 +165,7 @@ app.put('/complete-todo/:id', (req, res) => {
             return;
         }
 
-        console.log("Update result:", result); // ✅ Debugging log
+        console.log("Update result:", result);
 
         if (result.affectedRows > 0) {
             res.json({ message: 'Todo marked as completed!', success: true });
