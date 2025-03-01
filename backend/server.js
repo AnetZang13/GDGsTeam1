@@ -21,12 +21,20 @@ const TOKEN_PATH = path.join(process.cwd(), 'token.json');
 const CREDENTIALS_PATH = path.join(process.cwd(), 'GDGcredentials.json');
 
 // MySQL Database Configuration
-const dbConfig = {
-  host: '127.0.0.1',  // Change to '138.110.198.81' for remote
-  user: 'root',
-  password: 'GDGsteam1!',
-  database: 'GDGsT1'
-};
+const db = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
+});
+
+db.connect((err) => {
+  if (err) {
+    console.error('Database connection failed: ' + err.stack);
+    return;
+  }
+  console.log('Connected to database.');
+});
 
 // Load saved credentials if they exist
 async function loadSavedCredentialsIfExist() {

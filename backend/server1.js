@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
@@ -11,18 +13,21 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded data
 
-// MySQL Connection
+// MySQL Database Configuration
 const db = mysql.createConnection({
-  host: '127.0.0.1',
-  user: 'root',
-  password: 'Tel1232116027.',
-  database: 'GDGsT1'
-});
-
-db.connect((err) => { // check if the MySQL is connected 
-  if (err) throw err;
-  console.log('MySQL Connected...'); 
-});
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+  });
+  
+  db.connect((err) => {
+    if (err) {
+      console.error('Database connection failed: ' + err.stack);
+      return;
+    }
+    console.log('Connected to database.');
+  });
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../public')));
