@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const bcrypt = require('bcrypt');
 const express = require('express');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
@@ -53,10 +54,9 @@ let users = [];
 
 // Sign-up function
 app.post('/signup', (req, res) => {
-    const { userEmail, password, confirmPassword } = req.body;
+    const { userID, userEmail, password, confirmPassword } = req.body;
 
-    // Validate inputs
-    if (!userEmail || !password || !confirmPassword) {
+    if (!userID || !userEmail || !password || !confirmPassword) {
         return res.status(400).json({ message: "Missing email or password fields", success: false });
     }
     
@@ -65,10 +65,10 @@ app.post('/signup', (req, res) => {
     }
 
     // Check if the email already exists
-    const checkUserSQL = "SELECT * FROM users WHERE userEmail = ?";
-    db.query(checkUserSQL, [userEmail], (err, results) => {
+    const checkEmailSQL = "SELECT * FROM users WHERE userEmail = ?";
+    db.query(checkEmailSQL, [userEmail], (err, results) => {
         if (err) {
-            console.error("Database error on checking user:", err);
+            console.error("Database error on checking email:", err);
             return res.status(500).json({ message: "Database error", success: false });
         }
         
@@ -76,49 +76,75 @@ app.post('/signup', (req, res) => {
             return res.status(400).json({ message: "Email already exists", success: false });
         }
 
-        // Insert new user (note: consider hashing the password in production)
-        const insertSQL = "INSERT INTO users (userEmail, password) VALUES (?, ?)";
-        db.query(insertSQL, [userEmail, password], (err, result) => {
-            if (err) {
-                console.error("Error inserting user:", err);
+        // Check if the userID already exists
+        const checkUserSQL = "SELECT * FROM users WHERE userID = ?";
+    db.query(checkUserSQL, [userID], (err, results) => {
+        if (err) {
+                console.error("Database error on checking userID:", err);
                 return res.status(500).json({ message: "Database error", success: false });
-            }
+        }
+            
+        if (results.length > 0) {
+                return res.status(400).json({ message: "UserID already exists", success: false });
+        }
 
-            res.status(200).json({ 
-              message: "Sign-up successful", 
-              userID: result.insertId, 
-              success: true 
-            });
+            // Insert new user (hash the password in production!)
+            bcrypt.hash(password, 10, (err, hash) => {
+                if (err) return res.status(500).json({ message: "Error hashing password", success: false });
+            
+                const insertSQL = "INSERT INTO users (userID, userEmail, password) VALUES (?, ?, ?)";
+                db.query(insertSQL, [userID, userEmail, hash], (err, result) => {
+                    if (err) {
+                        console.error("Error inserting user:", err);
+                        return res.status(500).json({ message: "Database error", success: false });
+                    }
+                    res.status(200).json({ message: "Sign-up successful", success: true });
+                });
+            })
         });
     });
 });
 
 
-// Login function
-app.post('/login', (req, res) => {
-    const { userEmail, password } = req.body;
 
-    if (!userEmail || !password) {
+// Login function
+
+app.post('/login', (req, res) => {
+    const { userID, userEmail, password } = req.body;
+
+    if (!userID || !userEmail || !password) {
         return res.status(400).json({ message: "Missing email or password", success: false });
     }
 
-    const sql = "SELECT * FROM users WHERE userEmail = ? AND password = ?";
-    db.query(sql, [userEmail, password], (err, results) => {
+    const sql = "SELECT * FROM users WHERE userID = ? AND userEmail = ?";
+    db.query(sql, [userID, userEmail], (err, results) => {
         if (err) {
             console.error("Database error on login:", err);
             return res.status(500).json({ message: "Database error", success: false });
         }
 
-        if (results.length > 0) {
-            // Successful login; results[0].userID holds the user's ID.
-            return res.status(200).json({ 
-              message: "Login successful", 
-              userID: results[0].userID,
-              success: true 
-            });
-        } else {
+        if (results.length === 0) {
             return res.status(401).json({ message: "Invalid credentials", success: false });
         }
+
+        // Compare the entered password with the hashed password stored in the database
+        const storedHashedPassword = results[0].password;
+        bcrypt.compare(password, storedHashedPassword, (err, isMatch) => {
+            if (err) {
+                console.error("Error comparing passwords:", err);
+                return res.status(500).json({ message: "Error checking password", success: false });
+            }
+
+            if (isMatch) {
+                return res.status(200).json({ 
+                    message: "Login successful", 
+                    userID: results[0].userID,
+                    success: true 
+                });
+            } else {
+                return res.status(401).json({ message: "Invalid credentials", success: false });
+            }
+        });
     });
 });
 
@@ -128,33 +154,23 @@ app.post('/login', (req, res) => {
 app.post('/add-todo', (req, res) => {
     const { userID, toDo } = req.body;
 
-    // Check if the todo already exists for the user
-    const checkSQL = 'SELECT id FROM todo WHERE userID = ? AND toDo = ?';
-    db.query(checkSQL, [userID, toDo], (err, result) => {
+    console.log("Received data:", req.body); // ✅ Debugging log
+
+    if (!userID || !toDo) {
+        return res.status(400).json({ message: "Missing userID or todo", success: false });
+    }
+
+    const insertSQL = "INSERT INTO todo (userID, toDo, currStatus) VALUES (?, ?, 0)";
+    db.query(insertSQL, [userID, toDo], (err, result) => {
         if (err) {
-            console.error("Error checking existing todo:", err);
-            res.status(500).json({ message: 'Database error', success: false });
-            return;
+            console.error("Error inserting todo:", err);
+            return res.status(500).json({ message: 'Database error', success: false });
         }
 
-        if (result.length > 0) {
-            res.json({ message: 'Todo already exists!', success: false });
-            return;
-        }
-
-        // Insert if not duplicate
-        const insertSQL = 'INSERT INTO todo (userID, toDo, currStatus) VALUES (?, ?, 0)';
-        db.query(insertSQL, [userID, toDo], (err, result) => {
-            if (err) {
-                console.error("Error inserting todo:", err);
-                res.status(500).json({ message: 'Database error', success: false });
-                return;
-            }
-
-            res.json({ message: 'Todo added successfully.', id: result.insertId, success: true });
-        });
+        res.json({ message: 'Todo added successfully.', id: result.insertId, success: true });
     });
 });
+
 
 // Mark Todo as Completed (`currStatus = 1`)
 app.put('/complete-todo/:id', (req, res) => {
@@ -185,17 +201,38 @@ app.put('/complete-todo/:id', (req, res) => {
 
 // **Fetch Todos for a Specific User**
 app.get('/get-todos/:userID', (req, res) => {
-  const userID = req.params.userID;
-  const sql = 'SELECT * FROM todo WHERE userID = ?';
+    const userID = req.params.userID;
 
-  db.query(sql, [userID], (err, result) => {
-    if (err) throw err;
-    res.json(result);
-  });
+    if (!userID) {
+        return res.status(400).json({ message: "Missing userID", success: false });
+    }
+
+    const sql = "SELECT * FROM todo WHERE userID = ?";
+    db.query(sql, [userID], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Database error", success: false });
+        }
+        res.json(result);
+    });
 });
 
-// *Start the Server**
+// not sure about this
+app.get('/get-events/:userID', (req, res) => {
+    const userID = req.params.userID;
+
+    const sql = "SELECT * FROM events WHERE userID = ?";
+    db.query(sql, [userID], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Database error", success: false });
+        }
+        res.json(results);
+    });
+});
+
+
+//Start the Server
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
-
