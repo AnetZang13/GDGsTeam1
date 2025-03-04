@@ -12,7 +12,6 @@ let currentLocationVisible = false;
 let eventMarkers = []; 
 let eventLocationsVisible = false; 
 
-
 //Set MHC as center of map
 window.initMap = function () {
     const MHC = { lat: 42.2550, lng: -72.5770 };

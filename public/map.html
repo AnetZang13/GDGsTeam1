@@ -29,6 +29,7 @@
       <li><a href="login.html">Login page</a></li>
       <li><a href="index.html">Calendar</a></li>
       <li><a href="map.html">Campus Map</a></li>
+      <li><a href="my_preference.html">My Prefrence</a></li>       
     </ul>
   </div>
 
@@ -42,10 +43,20 @@
       <button id="show-current">Hide</button>
       <div class="form-group">
         <h3 id="route">Route</h3>
-        <input type="text" id="start-location" placeholder="Enter starting location">
-        <div id="autocomplete-list2"></div>
-        <input type="text" id="destination" placeholder="Enter destination">
-        <div id="autocomplete-list3"></div>
+        <form action=" " method="get">
+          <label>
+            <span>
+              Start location
+            </span>
+            <input id="start-location" name="start-location" required/>
+          </label>
+          <label>
+            <span>
+              Destination
+            </span>
+            <input id="destination" name="destination" required/>
+          </label>
+        </form>
       </div>
       <button id="show-route">Show route</button>
 
