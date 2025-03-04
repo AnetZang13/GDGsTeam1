@@ -90,7 +90,11 @@ Style for map
 }
 
 #map {
+<<<<<<< HEAD
     width: 70%;
+=======
+    width: 80%;
+>>>>>>> susan_dev
     align-items: flex-start;
     height: 550px;
 }
@@ -101,14 +105,22 @@ Style for map
     margin-left: 10px;
 }
 
+<<<<<<< HEAD
 #search-input {
+=======
+#search-input, #start-location, #destination {
+>>>>>>> susan_dev
     padding: 10px; 
     width: 300px; 
     border: 1px solid #ccc; 
     border-radius: 4px; 
 }
 
+<<<<<<< HEAD
 #autocomplete-list {
+=======
+#autocomplete-list,#autocomplete-list2, #autocomplete-list3  {
+>>>>>>> susan_dev
     max-height: 200px; 
     width: 300px;
     overflow-y: auto;
@@ -118,13 +130,20 @@ Style for map
     justify-content: right;
 }
 
+<<<<<<< HEAD
 #autocomplete-list ol {
+=======
+#autocomplete-list ol,#autocomplete-list2 ol, #autocomplete-list3 ol{
+>>>>>>> susan_dev
     border: 1px;
     font-weight: bold;
 }
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> susan_dev
 #show-route, #show-event, #show-current{
     background-color: rgba(73, 63, 38, 0.5);
     color: white;
@@ -139,4 +158,9 @@ Style for map
 
 #show-route:hover, #show-event:hover, #show-current:hover{
     background-color: rgba(73, 63, 38, 0.7);
+<<<<<<< HEAD
 }
+=======
+}
+
+>>>>>>> susan_dev
