@@ -83,7 +83,7 @@ function getAutocompleteSuggestions(query, list, inputField) {
     });
 }
 
-function displayAutocompleteList(predictions, list, inputField) {
+function displayAutocompleteList(predictions, list) {
     list.innerHTML = ''; 
     list.style.display = 'block'; 
 
