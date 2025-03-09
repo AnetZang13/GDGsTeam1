@@ -1,7 +1,7 @@
 let map;
 let service;
 let infowindow;
-let autocompleteService;
+let autocomplete;
 let currentMarker;
 let directionsService;
 let directionsRenderer;
@@ -21,8 +21,18 @@ window.initMap = function () {
     });
 
     infowindow = new google.maps.InfoWindow();
+    
     service = new google.maps.places.PlacesService(map);
-    autocompleteService = new google.maps.places.AutocompleteService();
+    var bounds = new google.maps.LatLngBounds(
+        new google.maps.LatLng(42.1, -72), 
+        new google.maps.LatLng(43, -73)  
+    );
+    autocomplete = new google.maps.places.Autocomplete()(
+        document.querySelector("#start-location"),{
+
+        }
+    )
+
     directionsService = new google.maps.DirectionsService();
     directionsRenderer = new google.maps.DirectionsRenderer();
     directionsRenderer.setMap(map);

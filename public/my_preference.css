@@ -4,7 +4,7 @@ body {
     font-family: 'Georgia', serif;
     margin: 0;
     padding: 0;
-    color: #4D4D4D;
+    color: #4D4D4D; 
 }
 
 /* Header title */
@@ -95,8 +95,6 @@ body {
     padding: 20px;
     max-width: 100%;
     margin: 0 auto;
-    overflow-y: auto; /* Enable vertical scrolling */
-
 }
 
 /* Styling for each preference item */
