@@ -58,4 +58,9 @@ function generateGrids() {
 }
 
 // Call the function to generate grids on page load
+<<<<<<< Updated upstream
 window.onload = generateGrids;
+=======
+window.onload = generateGrids;
+
+>>>>>>> Stashed changes
