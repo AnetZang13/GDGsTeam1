@@ -1,19 +1,21 @@
 let map;
 let service;
 let infowindow;
-let autocomplete;
+let autocompleteService;
 let currentMarker;
+let startLocation;
+let destination;
 let directionsService;
 let directionsRenderer;
 let currentLocation;
-let routeVisible = false; 
-let currentLocationMarker; 
-let currentLocationVisible = false; 
-let eventMarkers = []; 
-let eventLocationsVisible = false; 
+let routeVisible = false;
+let currentLocationMarker;
+let currentLocationVisible = false;
+let eventMarkers = [];
+let eventLocationsVisible = false;
 
 //Set MHC as center of map
-window.initMap = function () {
+function initMap() {
     const MHC = { lat: 42.2550, lng: -72.5770 };
     map = new google.maps.Map(document.getElementById("map"), {
         center: MHC,
@@ -21,18 +23,9 @@ window.initMap = function () {
     });
 
     infowindow = new google.maps.InfoWindow();
-    
+
     service = new google.maps.places.PlacesService(map);
-    var bounds = new google.maps.LatLngBounds(
-        new google.maps.LatLng(42.1, -72), 
-        new google.maps.LatLng(43, -73)  
-    );
-    autocomplete = new google.maps.places.Autocomplete()(
-        document.querySelector("#start-location"),{
-
-        }
-    )
-
+    autocompleteService = new google.maps.places.AutocompleteService();
     directionsService = new google.maps.DirectionsService();
     directionsRenderer = new google.maps.DirectionsRenderer();
     directionsRenderer.setMap(map);
@@ -47,147 +40,6 @@ window.initMap = function () {
         }
     });
 };
-
-//add search boxes for location input 
-document.addEventListener('DOMContentLoaded', function () {
-    initializeAutocomplete("search-input", "autocomplete-list");
-    initializeAutocomplete("start-location", "autocomplete-list2");
-    initializeAutocomplete("destination", "autocomplete-list3");
-    document.getElementById("show-route").addEventListener("click", toggleRoute);
-});
-
-function initializeAutocomplete(inputId, listId) {
-    const inputField = document.getElementById(inputId);
-    const autocompleteList = document.getElementById(listId);
-
-    inputField.addEventListener("input", function () {
-        const query = inputField.value;
-        if (query) {
-            getAutocompleteSuggestions(query, autocompleteList, inputField);
-        } else {
-            clearAutocompleteList(inputField);
-        }
-    });
-
-    autocompleteList.addEventListener("click", function (event) {
-        if (event.target && event.target.matches("div")) {
-            const placeId = event.target.getAttribute("data-place-id");
-            const inputId = inputField.id;
-            selectPlaceById(placeId, autocompleteList, inputId); 
-        }
-    });
-}
-
-function getAutocompleteSuggestions(query, list, inputField) {
-    const request = {
-        input: query,
-    };
-
-    autocompleteService.getPlacePredictions(request, (predictions, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK) {
-            displayAutocompleteList(predictions, list, inputField);
-        } else {
-            clearAutocompleteList(list);
-        }
-    });
-}
-
-function displayAutocompleteList(predictions, list) {
-    list.innerHTML = ''; 
-    list.style.display = 'block'; 
-
-    predictions.forEach(prediction => {
-        const item = document.createElement("div");
-        item.textContent = prediction.description; 
-        item.setAttribute("data-place-id", prediction.place_id); 
-        list.appendChild(item);
-    });
-}
-
-function clearAutocompleteList(list) {
-    list.innerHTML = ''; 
-}
-
-function selectPlaceById(placeId,autocompleteList, inputId) {
-    const service = new google.maps.places.PlacesService(map);
-
-    service.getDetails({ placeId: placeId }, (place, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK) {
-            map.setCenter(place.geometry.location);
-
-            if (currentMarker) {
-                currentMarker.setMap(null); 
-            }
-
-            currentMarker = new google.maps.Marker({
-                map: map,
-                position: place.geometry.location,
-            });
-
-            infowindow.setContent(place.name);
-            infowindow.open(map, currentMarker); 
-            clearAutocompleteList(autocompleteList);
-            document.getElementById(inputId).value = place.name;
-        } else {
-            console.error('Error fetching place details:', status);
-        }
-    });
-}
-
-function showRoute() {
-    const startLocation = document.getElementById("start-location").value;
-    const destination = document.getElementById("destination").value;
-
-    if (!startLocation || !destination) {
-        alert("Please enter both start location and destination.");
-        return;
-    }
-    getPlaceCoordinates(startLocation)
-        .then(startCoords => {
-            return getPlaceCoordinates(destination).then(destinationCoords => {
-                calculateRoute(startCoords, destinationCoords);
-            });
-        })
-        .catch(error => {
-            console.error(error);
-            alert("Could not find one of the locations. Please check your input.");
-        });
-
-    routeVisible=true;
-    document.getElementById("show-route").textContent = "Hide route";
-}
-
-function calculateRoute(startCoords, destinationCoords) {
-    const request = {
-        origin: startCoords,
-        destination: destinationCoords,
-        travelMode: google.maps.TravelMode.WALKING 
-    };
-
-    directionsService.route(request, (result, status) => {
-        if (status === google.maps.DirectionsStatus.OK) {
-            directionsRenderer.setDirections(result);
-        } else {
-            alert('Directions request failed due to ' + status);
-        }
-    });
-}
-
-
-function hideRoute() {
-    directionsRenderer.setMap(null); 
-    routeVisible = false;
-    document.getElementById("show-route").textContent = "Show route"; // Change button text
-}
-
-function toggleRoute() {
-    if (routeVisible) {
-        hideRoute();
-    } else {
-        showRoute(); 
-    }
-}
-
 
 function showCurrentLocation() {
     if (navigator.geolocation) {
@@ -219,8 +71,8 @@ function showCurrentLocation() {
             `});
             infoWindow.open(map, currentLocationMarker);
             map.setCenter(currentLocation);
-            currentLocationVisible = true; 
-            document.getElementById("show-current").textContent = "Hide"; 
+            currentLocationVisible = true;
+            document.getElementById("show-current").textContent = "Hide";
         }, () => {
             console.error("Geolocation service failed.");
         });
@@ -231,10 +83,10 @@ function showCurrentLocation() {
 
 function hideCurrentLocation() {
     if (currentLocationMarker) {
-        currentLocationMarker.setMap(null); 
+        currentLocationMarker.setMap(null);
     }
-    currentLocationVisible = false; 
-    document.getElementById("show-current").textContent = "Show"; 
+    currentLocationVisible = false;
+    document.getElementById("show-current").textContent = "Show";
 }
 
 function getPlaceCoordinates(placeName) {
@@ -246,16 +98,151 @@ function getPlaceCoordinates(placeName) {
         }, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
                 const location = results[0].geometry.location;
-                resolve(location); 
+                resolve(location);
             } else {
-                reject('Place not found: ' + status); 
+                reject('Place not found: ' + status);
             }
         });
     });
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById("search-input");
+    searchInput.addEventListener('input', () => {
+        fetchPredictions(searchInput.value);
+    })
+});
+
+function fetchPredictions(input) {
+    if (input === '') {
+        clearPredictions();
+        return;
+    }
+    const bounds = new google.maps.LatLngBounds(
+        new google.maps.LatLng(42.2549, -72.5771),
+        new google.maps.LatLng(42.2551, -72.5769)
+    );
+    autocompleteService.getPredictions({
+        input: input,
+        bounds: bounds,
+    }, displayPredictions);
+}
+
+function displayPredictions(predictions, status) {
+    if (status !== google.maps.places.PlacesServiceStatus.OK) {
+        return;
+    }
+    const autocompleteList = document.getElementById("autocomplete-list");
+    autocompleteList.innerHTML = '';
+
+    predictions.forEach(prediction => {
+        const listItem = document.createElement('li');
+        listItem.textContent = prediction.description;
+        listItem.setAttribute("data-place-id", prediction.place_id);
+        listItem.setAttribute("data-place-name", prediction.description);
+        autocompleteList.appendChild(listItem)
+    })
+
+    autocompleteList.style.display = 'block';
+}
+
+const autocompleteList = document.getElementById("autocomplete-list");
+autocompleteList.addEventListener("click", function (event) {
+    if (event.target && event.target.tagName === "LI") {
+        const placeId = event.target.getAttribute("data-place-id");
+        const placeName = event.target.getAttribute("data-place-name");
+        selectPlaceById(placeId);
+        startLocation = { lat: currentLocation.lat, lng: currentLocation.lng };
+        getPlaceCoordinates(placeName)
+        .then(coordinates => {
+            destination = coordinates;
+                })
+        .catch(error => {
+            ;
+            console.error("Error getting destination coordinates")
+        });
+
+    }
+})
+
+function clearPredictions() {
+    const autocompleteList = document.getElementById("autocomplete-list");
+    autocompleteList.innerHTML = '';
+}
+
+function selectPlaceById(placeId) {
+    const service = new google.maps.places.PlacesService(map);
+
+    service.getDetails({ placeId: placeId }, (place, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+            map.setCenter(place.geometry.location);
+            if (currentMarker) {
+                currentMarker.setMap(null);
+            }
+            currentMarker = new google.maps.Marker({
+                map: map,
+                position: place.geometry.location,
+            })
+
+            infowindow.setContent(place.name);
+            infowindow.open(map, currentMarker);
+            clearPredictions();
+        }
+
+        else {
+            console.error('Error fetching place details:', status);
+        }
+    });
+}
+
+const showButton = document.getElementById("show-route");
+
+showButton.addEventListener("click", () => {
+    toggleRoute();
+});
+
+
+
+function calculateRoute(startCoords, destinationCoords) {
+    const request = {
+        origin: startCoords,
+        destination: destinationCoords,
+        travelMode: google.maps.TravelMode.WALKING
+    };
+
+    directionsService.route(request, (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK) {
+            directionsRenderer.setDirections(result);
+        } else {
+            alert('Directions request failed due to ' + status);
+        }
+    });
+}
+
+function showRoute(){
+    directionsRenderer.setMap(map);
+    calculateRoute(startLocation, destination);
+    routeVisible = true;
+    showButton.textContent = "Hide route";
+}
+
+function hideRoute() {
+    directionsRenderer.setMap(null);
+    routeVisible = false;
+    showButton.textContent = "Show route";
+}
+
+function toggleRoute() {
+    if (routeVisible) {
+        hideRoute();
+    } else {
+        showRoute();
+    }
+}
+
 const events = [
-    {name: "GDG weekly meeting",
+    {
+        name: "GDG weekly meeting",
         time: "2024-12-05",
         location: "Blanchard",
         notes: "Discuss project updates"
@@ -265,7 +252,7 @@ const events = [
 async function showEventLocations() {
     for (const event of events) {
         try {
-            const location = await getPlaceCoordinates(event.location); 
+            const location = await getPlaceCoordinates(event.location);
             const marker = new google.maps.Marker({
                 position: location,
                 map: map,
@@ -290,22 +277,22 @@ async function showEventLocations() {
                     </div>
                  `);
             infowindow.open(map, marker);
-            eventMarkers.push(marker); 
+            eventMarkers.push(marker);
         } catch (error) {
-            console.error(error); 
+            console.error(error);
         }
     }
-    eventLocationsVisible = true; 
-    document.getElementById("show-event").textContent = "Hide event locations"; 
+    eventLocationsVisible = true;
+    document.getElementById("show-event").textContent = "Hide event locations";
 }
 
 function hideEventLocations() {
     eventMarkers.forEach(marker => {
-        marker.setMap(null); 
+        marker.setMap(null);
     });
-    eventMarkers = []; 
-    eventLocationsVisible = false; 
-    document.getElementById("show-event").textContent = "Show event locations"; 
+    eventMarkers = [];
+    eventLocationsVisible = false;
+    document.getElementById("show-event").textContent = "Show event locations";
 }
 
 /*Menu*/
@@ -314,8 +301,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var menuList = document.getElementById('menu-list');
 
     menuButton.onclick = function (event) {
-        event.stopPropagation(); 
-        menuList.classList.toggle('hidden'); 
+        event.stopPropagation();
+        menuList.classList.toggle('hidden');
     };
 
     window.onclick = function (event) {
@@ -326,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // Initialize the map
-initMap();
+window.initMap();
 
 
 

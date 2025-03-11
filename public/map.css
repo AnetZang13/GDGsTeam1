@@ -108,19 +108,18 @@ Style for map
     border-radius: 4px; 
 }
 
-#autocomplete-list,#autocomplete-list2, #autocomplete-list3  {
+#autocomplete-list{
     max-height: 200px; 
     width: 300px;
     overflow-y: auto;
-    border: 1px solid #ccc; 
     background-color: white; 
-    display: none; 
     justify-content: right;
+    list-style-type: none;
 }
 
-#autocomplete-list ol,#autocomplete-list2 ol, #autocomplete-list3 ol{
-    border: 1px;
-    font-weight: bold;
+#autocomplete-list li{
+    margin-left: -20px;
+    cursor: pointer;
 }
 
 
