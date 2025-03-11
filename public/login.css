@@ -16,7 +16,7 @@
 
 #login-frame{
     width: 32%;
-    height: 70%;
+    height: 60%;
     top: 50%;
     position: absolute;
     left: 50%;
@@ -29,7 +29,7 @@
     border-bottom-left-radius: 14px;
     border-bottom-right-radius: 14px;
     box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.25);
-    overflow-y: auto;
+    overflow: hidden;
     padding: 20px;
 }
 
@@ -40,7 +40,7 @@ h1{
 
 }
 
-#userID, #userEmail, #password, #google, #confirm-password{
+#username, #password{
     background: rgba(155,191,228,0.5);
     border: none;
     box-shadow: 0px 3px 5px rgb(177, 177, 177);
@@ -50,20 +50,6 @@ h1{
     height: 12%;
     padding: 12px;
     font-size: 14px;
-    color: gray;
-}
-
-#google{
-    color:gray;
-    text-align: center;
-    font-size: 14px;
-}
-
-#google .logo {
-  width: 20px;
-  height: 20px;
-  top: 50%;
-  left: 50%;
 }
 
 h2{ 
@@ -86,7 +72,7 @@ h3{
     margin: 5px
 }
 
-#sign-in, #sign-up{
+#sign-in{
     background: rgba(155,191,228,0.8);
     border: none;
     box-shadow: 0px 3px 5px rgb(177, 177, 177);
@@ -97,7 +83,7 @@ h3{
     padding: 12px;
     font-size: 18px;
 }
-#sign-in:hover, 
-#sign-up:hover{
+#sign-in:hover{
     background: rgba(155,191,228);
+
 }

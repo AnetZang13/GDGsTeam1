@@ -31,14 +31,8 @@ document.addEventListener('DOMContentLoaded', function () {
       right: 'dayGridMonth,timeGridWeek,timeGridDay,listDay'
     },
     views: {
-      listDay: { buttonText: 'List' },
-      dayGridMonth: {buttonText: 'Month'},
-      timeGridWeek: {buttonText: 'Week'}, 
-      timeGridDay: {buttonText: 'Day'}
+      listDay: { buttonText: 'List' }
     },
-    buttonText: {
-      today: 'Today' // Capitalized
-  },
     //adjust window to size of window
     windowResize: function (view) {
       if (window.innerWidth < 768) {
@@ -128,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.getElementById("add-event-button").onclick = function () {
     const title = document.getElementById('event-title').value.trim();
-<<<<<<< HEAD
     const startString = document.getElementById('event-start').value; // Get the start value as a string
     const endString = document.getElementById('event-end').value; // Get the end value as a string
     const location = document.getElementById('event-location').value;
@@ -138,51 +131,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (title && startString) {
       const start = new Date(startString); // Convert start string to Date object
       const end = endString ? new Date(endString) : null; // Convert end string to Date object if provided
-=======
-    const startString = document.getElementById('event-start').value;
-    const endString = document.getElementById('event-end').value;
-    const location = document.getElementById('event-location').value;
-    const notes = document.getElementById('event-notes').value;
-    const isWeekly = document.getElementById('weekly-event').checked;
-
-
-
-    if (title && startString) {
-      const start = new Date(startString);
-      const end = endString ? new Date(endString) : null;
-      const daysOfWeek = [
-        { name: 'monday', index: 1 },
-        { name: 'tuesday', index: 2 },
-        { name: 'wednesday', index: 3 },
-        { name: 'thursday', index: 4 },
-        { name: 'friday', index: 5 },
-        { name: 'saturday', index: 6 },
-        { name: 'sunday', index: 0 }
-      ];
-
-      daysOfWeek.forEach(day => {
-        const isChecked = document.getElementById(day.name).checked;
-        if (isChecked) {
-          addEventForDay(day.index, title, start, end, location, notes);
-        }
-      });
-
-      const existingEvents = calendar.getEvents();
-      const eventExists = existingEvents.some(event =>
-        event.title === title &&
-        event.start.getTime() === new Date(startString).getTime() &&
-        (endString ? event.end.getTime() === new Date(endString).getTime() : true)
-      );
-
-
->>>>>>> susan_dev
       const event = {
         title: title,
         start: start,
         end: end,
         location: location || null,
         notes: notes || null,
-<<<<<<< HEAD
         isWeekly: isWeekly // Include weekly event status
       };
 
@@ -316,143 +270,10 @@ document.addEventListener('DOMContentLoaded', function () {
           allEvents.forEach(e => {
             if (e.title === event.title) {
               e.remove(); // Remove the event
-=======
-        isWeekly: isWeekly
-      };
-
-      if (isWeekly) {
-        if (!eventExists) {
-          for (let i = 0; i < 26; i++) {
-            const nextWeek = new Date(start);
-            nextWeek.setDate(start.getDate() + (i * 7));
-            calendar.addEvent({
-              title: title,
-              start: nextWeek.toISOString(),
-              end: end ? new Date(nextWeek.getTime() + (end - start)).toISOString() : null,
-              location: location,
-              notes: notes,
-              isWeekly: true
-            });
-          }
-        }
-      } else {
-        calendar.addEvent(event);
-      }
-      document.getElementById('event-title').value = '';
-      document.getElementById('event-start').value = '';
-      document.getElementById('event-end').value = '';
-      document.getElementById('event-location').value = '';
-      document.getElementById('event-notes').value = '';
-      document.getElementById('weekly-event').checked = false;
-
-      modal.style.display = "none";
-    };
-
-  }
-  function addEventForDay(dayIndex, title, start, end, location, notes) {
-    for (let i = 0; i < 26; i++) {
-      const nextDate = new Date(start);
-      nextDate.setDate(start.getDate() + (i * 7) + (dayIndex - start.getDay() + 7) % 7);
-      calendar.addEvent({
-        title: title,
-        start: nextDate.toISOString(),
-        end: end ? new Date(nextDate.getTime() + (end - start)).toISOString() : null,
-        location: location,
-        notes: notes,
-        isWeekly: true
-      });
-    }
-  }
-
-  calendar.on('eventClick', function (info) {
-    //get current event
-    currentEvent = info.event;
-
-    //get the attributes of the current event
-    document.getElementById('event-title').value = currentEvent.title || '';
-    document.getElementById('event-start').value = formatDateForInput(currentEvent.start);
-    document.getElementById('event-end').value = currentEvent.end ? formatDateForInput(currentEvent.end) : '';
-    document.getElementById('event-location').value = currentEvent.extendedProps.location || '';
-    document.getElementById('event-notes').value = currentEvent.extendedProps.notes || '';
-    document.getElementById('weekly-event').checked = currentEvent.extendedProps.isWeekly || false;
-
-    //show current event
-    modal.style.display = "block";
-
-    //update the current event by updating the entry fields
-    document.getElementById("add-event-button").onclick = function () {
-      const title = document.getElementById('event-title').value.trim();
-      const startString = document.getElementById('event-start').value;
-      const endString = document.getElementById('event-end').value;
-      const location = document.getElementById('event-location').value;
-      const notes = document.getElementById('event-notes').value;
-      const isWeekly = document.getElementById('weekly-event').checked;
-
-      const start = new Date(startString);
-      const end = endString ? new Date(endString) : null;
-
-      //check if current event exists
-      if (currentEvent) {
-        if (currentEvent.extendedProps.isWeekly) {
-          const allEvents = calendar.getEvents();
-          allEvents.forEach(e => {
-            if (e.title === currentEvent.title) {
-              e.remove(); // remove all old events
-            }
-          });
-          //add in new event
-          calendar.addEvent({
-            title: title,
-            start: start,
-            end: end,
-            location: location || null,
-            notes: notes || null,
-            isWeekly: isWeekly
-          })
-        }
-
-        currentEvent.setProp('title', title);
-        currentEvent.setStart(start);
-        currentEvent.setEnd(end);
-        currentEvent.setExtendedProp('location', location);
-        currentEvent.setExtendedProp('notes', notes);
-
-        if (isWeekly) {
-          currentEvent.setExtendedProp('isWeekly', true);
-          for (let i = 1; i < 26; i++) {
-            const nextWeek = new Date(start);
-            nextWeek.setDate(start.getDate() + (i * 7));
-            calendar.addEvent({
-              title: title,
-              start: nextWeek.toISOString(),
-              end: end ? new Date(nextWeek.getTime() + (end - start)).toISOString() : null,
-              location: location || null,
-              notes: notes || null,
-              isWeekly: true
-            });
-          }
-        } 
-        modal.style.display = "none";
-      } else {
-        alert('Please select an event to update.');
-      }
-
-
-    };
-    document.getElementById("delete-event-button").onclick = function () {
-      const event = info.event;
-      if (confirm('Are you sure you want to delete this event?')) {
-        if (event.extendedProps.isWeekly) {
-          const allEvents = calendar.getEvents();
-          allEvents.forEach(e => {
-            if (e.title === event.title) {
-              e.remove();
->>>>>>> susan_dev
             }
           });
           alert('The event is deleted for all weeks. ');
         } else {
-<<<<<<< HEAD
           // Logic to delete the single event
           event.remove(); // Remove the single event
           alert('The event has been deleted.');
@@ -482,32 +303,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
   });
-=======
-          event.remove();
-          alert('The event has been deleted.');
-        }
-        document.getElementById('event-title').value = '';
-        document.getElementById('event-start').value = '';
-        document.getElementById('event-end').value = '';
-        document.getElementById('event-location').value = '';
-        document.getElementById('event-notes').value = '';
-        document.getElementById('weekly-event').checked = false;
-        modal.style.display = "none";
-      }
-    };
-  });
-
-  function formatDateForInput(date) {
-    const localDate = new Date(date);
-    const offset = localDate.getTimezoneOffset();
-    localDate.setMinutes(localDate.getMinutes() - offset);
-    return localDate.toISOString().slice(0, 16);
-  }
-
-});
->>>>>>> susan_dev
-
-
 
 /*Menu*/
 
@@ -523,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Closing the menu when clicking anywhere outside of it in the window
   window.onclick = function (event) {
-    //checks if menu is visable and if the click does not occur on menu button
+    //checks if menu is visible and if the click does not occur on menu button
     if (!menuList.classList.contains('hidden') && !menuButton.contains(event.target)) {
       menuList.classList.add('hidden');
     }

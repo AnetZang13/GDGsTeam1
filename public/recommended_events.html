@@ -3,45 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="main.css">
-      <!-- Link to font-->
-  <link href="https://fonts.googleapis.com/css?family=Jacques+Francois&display=swap" rel="stylesheet" />
-  <!-- Link to FullCalendar-->
-  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
-  <script src="path/to/ical.min.js"></script>
-  <script src="recommended_events.js"></script>
-    <title>Event recommendations</title>
+    <title>Recommended Events</title>
+    <link rel="stylesheet" href="recommended_events.css">
 </head>
 <body>
-    <!-- Create main container-->
-    <div id="app-container">
-    <!-- Create header-->
-    <div id="header">
-      <!-- Create title "My Calendar"-->
-      <h1 id="app-title">Event recommendations</h1>
-      <!-- Create menu button-->
-      <div id="menu-container">
-        <button id="menu-button">Menu</button>
-      </div>
+    <h1>Recommended Events</h1>
+    <div id="events-container">
+        <!-- Events will be dynamically added here -->
     </div>
-    <!-- Create a list of indexes for menu-->
-    <div id="menu-list" class="hidden">
-        <ul>
-          <li><a href="login.html">Login page</a></li>
-          <li><a href="index.html">Calendar</a></li>
-          <li><a href="map.html">Campus Map</a></li>
-          <li><a href="my_preference.html">My Prefrence</a></li>         
-          <li><a href="recommended_events.html">My Prefrence</a></li>         
-        </ul>
-      </div>
 
-      <div id="main-content">
-      <div id="calendar"></div>
-      </div>
-
-    </div>
-  </div>
-
-
+    <script src="recommended_events.js"></script>
 </body>
 </html>

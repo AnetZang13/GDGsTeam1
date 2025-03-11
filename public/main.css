@@ -18,7 +18,7 @@ Style for elements in header
     justify-content: space-between;
     /* Create between title and menu button */
     padding: 10px;
-    /* Add padding arround content */
+    /* Add padding around content */
 }
 
 #app-title {
@@ -281,7 +281,7 @@ Style for elements inside calendar
 }
 
 /* Add button */
-#add-todo, #show, #load-event {
+#add-todo, #show {
     background-color: rgba(73, 63, 38, 0.5);
     color: white;
     border: none;
@@ -293,24 +293,9 @@ Style for elements inside calendar
     margin-bottom: 8px;
 }
 
-<<<<<<< HEAD
 #add-todo:hover,#show:hover {
-=======
-
-#add-todo:hover,#show:hover, #load-event:hover {
->>>>>>> susan_dev
     background-color: rgba(73, 63, 38, 0.7);
 }
-
-
-
-.logo {
-    width: 30px; 
-    height: 30px; 
-    margin-bottom: -5px;
-    background-color: transparent;
-}
-
 
 /*
 Style for Add event
@@ -371,10 +356,6 @@ Style for Add event
     margin-bottom: 5px;
     margin-left: 20px;
     margin-top: -2px;
-}
-
-#form-group-box{
-    flex-direction: column;
 }
 
 label {
