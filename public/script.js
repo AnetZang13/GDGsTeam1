@@ -97,9 +97,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   };
 
-
-
-
   //Add event window
   var modal = document.getElementById("eventModal");
   var btn = document.getElementById("open-modal");
@@ -186,6 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
   calendar.on('eventClick', function (info) {
+    
     currentEvent = info.event; // Store the clicked event
 
 
