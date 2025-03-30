@@ -497,3 +497,30 @@ Style for menu list
 #menu-list a:hover {
     color: grey;
 }
+
+button#addButton {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background-color: rgba(73, 63, 38, 0.5);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button#addButton:hover {
+    background-color: rgba(73, 63, 38, 0.7);
+}
+
+button.added {
+    background-color: #6c757d;
+    /* Change to a different color */
+    cursor: default;
+    /* Change cursor to indicate no further action */
+}
+
+button.added:hover {
+    background-color: #6c757d;
+    /* Keep the same color on hover */
+}

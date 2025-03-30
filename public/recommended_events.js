@@ -70,19 +70,33 @@ calendar.render();
 var modal = document.getElementById("eventModal");
 var span = document.getElementsByClassName("close")[0];
 
-calendar.on('eventClick', function() {
+calendar.on('eventClick', function(info) {
   modal.style.display = "block";
+  modal.onclick = function (event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+    var addButton = event.target.closest('#addButton'); 
+  
+        if (addButton) {
+          if (!addButton.classList.contains('added')) {
+            addButton.classList.add('added');
+            addButton.textContent = 'Added'; 
+            info.event.setProp('backgroundColor', '#013220');
+          } else {
+            addButton.classList.remove('added');
+            addButton.textContent = 'Add'; 
+            info.event.setProp('backgroundColor', '');
+          }
+        }
+  }
 });
 
 span.onclick = function () {
   modal.style.display = "none";
 }
 
-modal.onclick = function (event) {
-  if (event.target == modal) {
-    modal.style.display = "none";
-  }
-}
+
   
     /*Menu*/
   
@@ -103,6 +117,7 @@ modal.onclick = function (event) {
         menuList.classList.add('hidden');
       }
     };
+
   });
   
 });
