@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta userID="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css?family=Jacques+Francois&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css?family=IM+FELL+Great+Primer&display=swap" rel="stylesheet" />
     <link href="login.css" rel="stylesheet" />
@@ -14,12 +14,13 @@
     <div id="window">
         <div id="login-frame">
             <h1>Login</h1>
-            <input type="text" id="userID" placeholder="userID" required /> 
-            <input type="email" id="userEmail" placeholder="Email" required /> 
-            <input type="password" id="password" placeholder="password" required /> 
+            <input type="text" id="userID" placeholder="Your User ID" required />
+            <input type="email" id="userEmail" placeholder="Email" required />
+            <input type="password" id="password" placeholder="Password"required />
             <button id="sign-in">Sign in</button>
             <h2>
-                <a href="signUp.html" style="text-decoration: underline; color: grey;">Don't have an account? Register</a>
+                <a href="signUp.html" style="text-decoration: underline; color: grey;">Don't have an account?
+                    Register</a>
             </h2>
         </div>
     </div>
@@ -29,13 +30,15 @@
             const userID = document.getElementById('userID').value.trim();
             const userEmail = document.getElementById('userEmail').value.trim();
             const password = document.getElementById('password').value.trim();
-    
+
             if (!userID || !userEmail || !password) {
                 alert("Please fill in all fields.");
                 return;
             }
-    
-            fetch('http://localhost:3006/login', {
+
+            
+            
+            fetch('http://localhost:61002/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userID, userEmail, password })
@@ -44,16 +47,17 @@
             .then(data => {
                 alert(data.message);
                 if (data.success) {
-                    localStorage.setItem('userID', data.userID);  // ✅ Save userID
-                    window.location.href = 'index.html';  // Redirect to calendar/todo page
+                    localStorage.setItem('userID', data.userID);  // Store userID
+                    window.location.href = 'index.html';  // Redirect to the calendar page
                 }
             })
             .catch(error => console.error('Error:', error));
             
         });
     </script>
-    
+
 
 </body>
+
 </html>
 

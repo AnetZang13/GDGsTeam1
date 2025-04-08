@@ -102,68 +102,81 @@ Structure of elements for index.html:
     
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const userID = localStorage.getItem('userID');  // ✅ Get logged-in userID
-    
-        if (!userID) {
-            alert("You are not logged in!");
-            window.location.href = "login.html";  // Redirect to login if no user is logged in
-            return;
-        }
-    
-        // Load user's todos
-        loadTodos(userID);
-    });
-    
-    function loadTodos(userID) {
-        fetch(`http://localhost:3006/get-todos/${userID}`)
-        .then(response => response.json())
-        .then(data => {
-            const todoList = document.getElementById('todos');
-            todoList.innerHTML = '';  
-    
-            data.forEach(todo => {
-                addTodoToList(todo);
-            });
-        })
-        .catch(error => console.error('Error:', error));
-    }
-    
-    function addTodoToList(todo) {
-        const todoList = document.getElementById('todos');
-        const li = document.createElement('li');
-        li.textContent = todo.toDo;
-    
-        const completeButton = document.createElement('button');
-        completeButton.textContent = 'Completed!';
-        completeButton.style.backgroundColor = 'green';
-        completeButton.onclick = () => completeTodo(todo.id, li); 
-    
-        li.appendChild(completeButton);
-        todoList.appendChild(li);
-    }
-    function loadEvents() {
-      const userID = localStorage.getItem('userID');
-  
-      fetch(`http://localhost:3006/get-events/${userID}`)
-      .then(response => response.json())
-      .then(events => {
-          const calendarEl = document.getElementById('calendar');
-          const calendar = new FullCalendar.Calendar(calendarEl, {
-              initialView: 'dayGridMonth',
-              events: events.map(event => ({
-                  title: event.eventName,
-                  start: event.startDate,
-                  end: event.endDate
-              }))
-          });
-          calendar.render();
-      })
-      .catch(error => console.error('Error loading events:', error));
-  }
-  
-    
+          const userID = localStorage.getItem('userID');
       
-    </script>
+          if (!userID) {
+              alert("You are not logged in!");
+              window.location.href = "login.html";
+              return;
+          }
+      
+          // Load todos
+          loadTodos(userID);
+      
+          // Add event listener for "Add" button
+          document.getElementById('add-todo').addEventListener('click', () => {
+              const toDo = document.getElementById('new-todo').value.trim();
+      
+              console.log("userID from localStorage:", userID);
+              console.log("todo input value:", toDo);
+
+              if (!toDo) {
+                  alert("Please enter a todo item!");
+                  return;
+              }
+
+
+      
+              fetch('http://localhost:61002/add-todo', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ userID, toDo })
+              })
+              .then(response => response.json())
+              .then(data => {
+                  console.log("✅ Server response:", data); // 🔍 Add this!
+                  
+                  alert(data.message);  
+                  if (data.success) {
+                      document.getElementById('new-todo').value = '';
+                      loadTodos(userID);
+                  }
+              })
+              .catch(error => {
+                  console.error('Error:', error);
+                  alert("Failed to add todo.");
+              });
+          });
+      });
+
+      
+      function loadTodos(userID) {
+        fetch(`http://localhost:61002/get-todos/${userID}`)
+            .then(response => response.json())
+            .then(data => {
+                const todoList = document.getElementById('todos');
+                todoList.innerHTML = '';
+    
+                data.forEach(todo => {
+                    const li = document.createElement('li');
+                    li.textContent = todo.toDo;
+    
+                    const completeButton = document.createElement('button');
+                    completeButton.textContent = 'Completed!';
+                    completeButton.style.backgroundColor = 'green';
+                    completeButton.onclick = () => completeTodo(todo.id, li);
+    
+                    li.appendChild(completeButton);
+                    todoList.appendChild(li);
+                });
+            })
+            .catch(error => console.error('Error loading todos:', error));
+    }
+    
+      </script>
+      
     
     
     

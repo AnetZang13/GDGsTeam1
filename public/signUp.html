@@ -3,21 +3,21 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta userID="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css?family=Jacques+Francois&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css?family=IM+FELL+Great+Primer&display=swap" rel="stylesheet" />
-    <link href="signUp.css" rel="stylesheet"/>
+    <link href="login.css" rel="stylesheet"/>
     <title>Sign Up</title>
 </head>
 
 <body>
     <div id="window">
         <div id="login-frame">
-            <h4>
+            <h3>
                 <a href="login.html" style="text-decoration: underline; color: black;">Have an account? Login</a>
-            </h4> 
+            </h3> 
             <h1>Sign Up</h1>
-            <input type="text" id="userID" placeholder="Full userID" required /> 
+            <input type="text" id="userID" placeholder="Your User ID" required /> 
             <input type="email" id="userEmail" placeholder="Email" required /> 
             <input type="password" id="password" placeholder="Password" required /> 
             <input type="password" id="confirm-password" placeholder="Confirm Password" required />
@@ -31,7 +31,7 @@
             const userEmail = document.getElementById('userEmail').value.trim();
             const password = document.getElementById('password').value.trim();
             const confirmPassword = document.getElementById('confirm-password').value.trim();
-        
+    
             if (!userID || !userEmail || !password || !confirmPassword) {
                 alert("Please fill in all fields.");
                 return;
@@ -40,22 +40,22 @@
                 alert("Passwords do not match.");
                 return;
             }
-        
-            fetch('http://localhost:3006/signup', {
+    
+            fetch('http://localhost:61002/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                // Include confirmPassword in the payload so the server can verify it
                 body: JSON.stringify({ userID, userEmail, password, confirmPassword })
             })
             .then(response => response.json())
             .then(data => {
                 alert(data.message);
                 if (data.success) {
-                    window.location.href = 'login.html';
+                    window.location.href = 'login.html'; // Redirect to login page after successful signup
                 }
             })
             .catch(error => console.error('Error:', error));
         });
-        
     </script>
     
 

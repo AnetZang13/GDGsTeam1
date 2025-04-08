@@ -7,7 +7,12 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 
-const PORT = process.env.PORT || 3006;
+const PORT = process.env.PORT;
+
+// Check if environment variables are loaded
+// console.log("Database Host:", process.env.DB_HOST);
+// console.log("Database User:", process.env.DB_USER);
+// console.log("Database Name:", process.env.DB_NAME);
 
 const app = express();
 app.use(cors());
@@ -15,37 +20,48 @@ app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded data
 
 // MySQL Database Configuration
-const db = mysql.createConnection({
+const db = mysql.createPool({
     host: process.env.DB_HOST,
+    port: PORT,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME
-  });
-  
-  db.connect((err) => {
-    if (err) {
-      console.error('Database connection failed: ' + err.stack);
-      return;
-    }
-    console.log('Connected to database.');
-  });
-
-// Serve static files
-app.use(express.static(path.join(__dirname, '../public')));
-
-// Basic route to serve index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
+
+
+// Test the database connection
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error("Database connection failed:", err);
+    } else {
+        console.log("Connected to MySQL database.");
+        connection.release(); // Release the connection back to the pool
+    }
+});
+
+
+
+// Redirect the root path `/` to login.html 
+app.get('/', (req, res) => {
+  res.redirect('/login.html'); 
+});
+
+// Serve static files from the correct directory
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Route to serve login.html
 app.get('/login.html', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public', 'login.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
+});
+
+// Route to serve index.html
+app.get('/index.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 // Route to serve signUp.html
 app.get('/signUp.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public', 'signUp.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'signUp.html'));
 });
 
 
@@ -113,7 +129,7 @@ app.post('/login', (req, res) => {
     const { userID, userEmail, password } = req.body;
 
     if (!userID || !userEmail || !password) {
-        return res.status(400).json({ message: "Missing email or password", success: false });
+        return res.status(400).json({ message: "Missing userID, email or password", success: false });
     }
 
     const sql = "SELECT * FROM users WHERE userID = ? AND userEmail = ?";
@@ -154,20 +170,39 @@ app.post('/login', (req, res) => {
 app.post('/add-todo', (req, res) => {
     const { userID, toDo } = req.body;
 
-    console.log("Received data:", req.body); // ✅ Debugging log
-
     if (!userID || !toDo) {
         return res.status(400).json({ message: "Missing userID or todo", success: false });
     }
 
     const insertSQL = "INSERT INTO todo (userID, toDo, currStatus) VALUES (?, ?, 0)";
+    
+    console.log(`Executing Query: ${insertSQL} | Values: ${userID}, ${toDo}`);
+
     db.query(insertSQL, [userID, toDo], (err, result) => {
         if (err) {
             console.error("Error inserting todo:", err);
             return res.status(500).json({ message: 'Database error', success: false });
-        }
+        } 
 
+        console.log("Todo Added! Insert ID:", result.insertId);
         res.json({ message: 'Todo added successfully.', id: result.insertId, success: true });
+    });
+});
+
+app.post('/create_event', (req, res) => {
+    const { userID, title, description, startTime, endTime, location, notes } = req.body;
+
+    if (!userID || !title || !startTime) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const insertSQL = "INSERT INTO events (userID, title, description, startTime, endTime, location, notes) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    db.query(insertSQL, [userID, title, description, startTime, endTime, location, notes], (err, result) => {
+        if (err) {
+            console.error('Error inserting event:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ message: 'Event created successfully!', event_id: result.insertId });
     });
 });
 
@@ -192,10 +227,9 @@ app.put('/complete-todo/:id', (req, res) => {
             res.json({ message: 'Todo marked as completed!', success: true });
         } else {
             res.json({ message: 'Todo not found', success: false });
-        }
+        } 
     });
 });
-
 
 
 
