@@ -73,29 +73,23 @@ Structure of elements for index.html:
     <!-- Create window  -->
     <div id="eventModal" class="modal">
       <div class="modal-content">
-        <!-- Create close button  -->
         <span class="close">&times;</span>
-        <!-- Create add event entry box -->
         <div class="form-group">
           <label for="event-title">Event name:</label>
           <input type="text" id="event-title" placeholder="Event Title" required>
         </div>
-        <!-- Create start time entry box -->
         <div class="form-group">
           <label for="event-start">Start time:</label>
           <input type="datetime-local" id="event-start" required>
         </div>
-        <!-- Create end time entry box -->
         <div class="form-group">
           <label for="event-end">End time:</label>
           <input type="datetime-local" id="event-end">
         </div>
-        <!-- Create note box with Quill -->
         <div class="form-group">
           <label for="event-notes">Notes:</label>
-          <div id="quill-editor"></div> <!-- Quill editor -->
+          <div id="quill-editor"></div>
         </div>
-        <!-- Create add event button-->
         <button id="add-event-button">Add Event</button>
       </div>
     </div>
