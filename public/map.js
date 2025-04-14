@@ -1,17 +1,7 @@
 let map;
 let service;
-let infowindow;
-let autocompleteService;
-let currentMarker;
-let startLocation;
-let destination;
-let directionsService;
-let directionsRenderer;
-let currentLocation;
-let routeVisible = false;
-let currentLocationMarker;
-let currentLocationVisible = false;
 let eventMarkers = [];
+let infoWindows = [];
 let eventLocationsVisible = false;
 
 //Set MHC as center of map
@@ -240,12 +230,27 @@ function toggleRoute() {
     }
 }
 
+
+const showEvent = document.getElementById("show-event");
+
+showEvent.addEventListener("click", () => {
+    toggleLocation();
+});
+
+
 const events = [
     {
-        name: "GDG weekly meeting",
-        time: "2024-12-05",
-        location: "Blanchard",
+        name: "GDGs weekly meeting",
+        time: "2024-04-17",
+        location: "Kendade Hall",
         notes: "Discuss project updates"
+    },
+
+    {
+        name: "Study Abroad 101",
+        time: "2024-04-17",
+        location: "Dwight Hall",
+        notes: "Study abroad info session "
     },
 ];
 
@@ -266,25 +271,28 @@ async function showEventLocations() {
                     strokeColor: "white"
                 }
             });
+            const infoWindow = new google.maps.InfoWindow({
+                content:`
+                <div>
+                    <h3>${event.name}</h3>
+                    <p><strong>Time:</strong> ${new Date(event.time).toLocaleString()}</p>
+                    <p><strong>Location:</strong> ${event.location}</p>
+                    <p><strong>Notes:</strong> ${event.notes}</p>
+                </div>
+                `
+            });
+        infoWindow.open(map, marker);
+        infoWindows.push(infoWindow);
+        eventMarkers.push(marker);
 
-
-            infowindow.setContent(`
-                    <div>
-                        <h3>${event.name}</h3>
-                        <p><strong>Time:</strong> ${new Date(event.time).toLocaleString()}</p>
-                        <p><strong>Location:</strong> ${event.location}</p>
-                        <p><strong>Notes:</strong> ${event.notes}</p>
-                    </div>
-                 `);
-            infowindow.open(map, marker);
-            eventMarkers.push(marker);
         } catch (error) {
             console.error(error);
         }
     }
     eventLocationsVisible = true;
-    document.getElementById("show-event").textContent = "Hide event locations";
+    document.getElementById("show-event").textContent = "Hide event location";
 }
+
 
 function hideEventLocations() {
     eventMarkers.forEach(marker => {
@@ -292,8 +300,17 @@ function hideEventLocations() {
     });
     eventMarkers = [];
     eventLocationsVisible = false;
-    document.getElementById("show-event").textContent = "Show event locations";
+    document.getElementById("show-event").textContent = "Show event location";
 }
+
+function toggleLocation() {
+    if (eventLocationsVisible) {
+        hideEventLocations();
+    } else {
+        showEventLocations();
+    }
+}
+
 
 /*Menu*/
 document.addEventListener('DOMContentLoaded', function () {

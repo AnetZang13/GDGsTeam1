@@ -309,11 +309,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 
-
-
-
-
-
     // Function to format date for datetime-local input
     function formatDateForInput(date) {
       const localDate = new Date(date); // Create a new Date object

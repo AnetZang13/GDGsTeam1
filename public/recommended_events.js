@@ -21,22 +21,22 @@ document.addEventListener('DOMContentLoaded', function () {
   
     // Implement FullCalendar
     var calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'timeGridWeek',
+      initialView: 'dayGridMonth',
       timeZone: 'local',
       events: [
         {
           title: 'BINGO',
-          start: '2025-03-26T18:00:00', 
+          start: '2025-04-16T18:00:00', 
           end: '2025-03-26T20:00:00'
         },
         {
           title: 'Beekeeping 101: A Talk With Dan',
-          start: '2025-03-26T14:00:00', 
+          start: '2025-04-17T14:00:00', 
           end: '2025-03-26T15:00:00'
         },
         {
           title: 'Clay Crafts & Tea Time',
-          start: '2025-03-27T19:00:00', 
+          start: '2025-04-17T19:00:00', 
           end: '2025-03-26T20:30:00'
         }
       ],
@@ -96,29 +96,26 @@ span.onclick = function () {
   modal.style.display = "none";
 }
 
-
-  
-    /*Menu*/
-  
-  document.addEventListener('DOMContentLoaded', function () {
-    var menuButton = document.getElementById('menu-button');
-    var menuList = document.getElementById('menu-list');
-  
-    // Show the menu when the button is clicked
-    menuButton.onclick = function (event) {
-      event.stopPropagation(); // Prevent affecting parent elements like the window
-      menuList.classList.toggle('hidden'); // If the window is closed, open it, and vise versa
-    };
-  
-    // Closing the menu when clicking anywhere outside of it in the window
-    window.onclick = function (event) {
-      //checks if menu is visable and if the click does not occur on menu button
-      if (!menuList.classList.contains('hidden') && !menuButton.contains(event.target)) {
-        menuList.classList.add('hidden');
-      }
-    };
-
-  });
-  
 });
   
+/* Menu */
+document.addEventListener('DOMContentLoaded', function () {
+  var menuButton = document.getElementById('menu-button');
+  var menuList = document.getElementById('menu-list');
+
+
+  // Show the menu when the button is clicked
+  menuButton.onclick = function (event) {
+    event.stopPropagation(); // Prevent affecting parent elements like the window
+    menuList.classList.toggle('hidden'); // If the window is closed, open it, and vise versa
+  };
+
+
+  // Closing the menu when clicking anywhere outside of it in the window
+  window.onclick = function (event) {
+    //checks if menu is visible and if the click does not occur on menu button
+    if (!menuList.classList.contains('hidden') && !menuButton.contains(event.target)) {
+      menuList.classList.add('hidden');
+    }
+  };
+});
