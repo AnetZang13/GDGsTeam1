@@ -1,4 +1,4 @@
-//Load content of html into the current  file
+// Load content of html into the current file
 document.addEventListener('DOMContentLoaded', function () {
 
   //Load in main container 
@@ -84,17 +84,16 @@ document.addEventListener('DOMContentLoaded', function () {
     console.error('Todo list elements not found');
   }
 
-// Show/Hide completed items
-showButton.onclick = function () {
-  if (completedList.style.display === "none" || completedList.classList.contains('hidden')) {
-      completedList.style.display = "block"; 
-      showButton.textContent = 'Hide'; 
-  } else {
-      completedList.style.display = "none"; 
-      showButton.textContent = 'Show'; 
-  }
-};
-
+  // Show/Hide completed items
+  showButton.onclick = function () {
+    if (completedList.style.display === "none" || completedList.classList.contains('hidden')) {
+        completedList.style.display = "block"; 
+        showButton.textContent = 'Hide'; 
+    } else {
+        completedList.style.display = "none"; 
+        showButton.textContent = 'Show'; 
+    }
+  };
 
   //Add event window
   var modal = document.getElementById("eventModal");
