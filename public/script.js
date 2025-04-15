@@ -32,15 +32,24 @@ document.addEventListener('DOMContentLoaded', function () {
     views: {
       listDay: { buttonText: 'List' }
     },
-    //adjust window to size of window
     windowResize: function (view) {
       if (window.innerWidth < 768) {
         calendar.changeView('listWeek');
       } else {
         calendar.changeView('dayGridMonth');
       }
+    },
+  
+  
+    eventClick: function (info) {
+      document.getElementById('info-title').textContent = info.event.title;
+      document.getElementById('info-start').textContent = info.event.start.toLocaleString();
+      document.getElementById('info-end').textContent = info.event.end ? info.event.end.toLocaleString() : 'N/A';
+      document.getElementById('info-description').innerHTML = info.event.extendedProps.notes || 'No notes';
+      document.getElementById('eventInfoModal').style.display = 'block';
     }
   });
+  
   calendar.render();
 
   // Todo list 
@@ -180,3 +189,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   };
 });
+
+
+  // Modal close logic
+  const closeInfoBtn = document.querySelector('.close-info');
+  closeInfoBtn.onclick = function () {
+    document.getElementById('eventInfoModal').style.display = 'none';
+  };
+
+  window.onclick = function (event) {
+    const modal = document.getElementById('eventInfoModal');
+    if (event.target === modal) {
+      modal.style.display = 'none';
+    }
+    const closeInfoBtn = document.querySelector('.close-info');
+    closeInfoBtn.onclick = function () {
+      document.getElementById('eventInfoModal').style.display = 'none';
+    };
+    
+    window.onclick = function (event) {
+      const modal = document.getElementById('eventInfoModal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+  };
+
