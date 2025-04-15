@@ -50,39 +50,39 @@ document.addEventListener('DOMContentLoaded', function () {
   const completedList = document.getElementById('completed-todos');
   const showButton = document.getElementById('show');
 
-  //Check if elements in todo list exist
-  if (todoList && newTodoInput && addTodoButton) {
-    addTodoButton.addEventListener('click', addTodo);
-    //If enter is pressed, new todo event is created
-    newTodoInput.addEventListener('keypress', function (e) {
-      if (e.key === 'Enter') {
-        addTodo();
-      }
-    });
+  // //Check if elements in todo list exist
+  // if (todoList && newTodoInput && addTodoButton) {
+  //   addTodoButton.addEventListener('click', addTodo);
+  //   //If enter is pressed, new todo event is created
+  //   newTodoInput.addEventListener('keypress', function (e) {
+  //     if (e.key === 'Enter') {
+  //       addTodo();
+  //     }
+  //   });
 
-    function addTodo() {
-      //Remove spaces in text entered
-      const todoText = newTodoInput.value.trim();
-      if (todoText) {
-        //Create todo item and "Completed!" button
-        const li = document.createElement('li');
-        li.textContent = todoText;
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Completed!';
-        deleteButton.addEventListener('click', function () {
-          completedList.appendChild(li);
-          li.removeChild(deleteButton); 
-        });
-        //Add "Completed" and new item to todo list
-        li.appendChild(deleteButton);
-        todoList.appendChild(li);
-        //Clear input field
-        newTodoInput.value = '';
-      }
-    }
-  } else {
-    console.error('Todo list elements not found');
-  }
+    // function addTodo() {
+    //   //Remove spaces in text entered
+    //   const todoText = newTodoInput.value.trim();
+    //   if (todoText) {
+    //     //Create todo item and "Completed!" button
+    //     const li = document.createElement('li');
+    //     li.textContent = todoText;
+    //     const deleteButton = document.createElement('button');
+    //     deleteButton.textContent = 'Completed!';
+    //     deleteButton.addEventListener('click', function () {
+    //       completedList.appendChild(li);
+    //       li.removeChild(deleteButton); 
+    //     });
+    //     //Add "Completed" and new item to todo list
+    //     li.appendChild(deleteButton);
+    //     todoList.appendChild(li);
+    //     //Clear input field
+    //     newTodoInput.value = '';
+    //   }
+    // }
+  // } else {
+  //   console.error('Todo list elements not found');
+  // }
 
 // Show/Hide completed items
 showButton.onclick = function () {

@@ -102,80 +102,116 @@ Structure of elements for index.html:
     
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-          const userID = localStorage.getItem('userID');
-      
-          if (!userID) {
-              alert("You are not logged in!");
-              window.location.href = "login.html";
-              return;
+        const userID = localStorage.getItem('userID');
+        if (!userID) {
+          alert("You are not logged in!");
+          window.location.href = "login.html";
+          return;
+        }
+    
+        // Load todos from DB
+        loadTodos(userID);
+    
+        document.getElementById('add-todo').addEventListener('click', addTodo);
+        document.getElementById('new-todo').addEventListener('keypress', function (e) {
+          if (e.key === 'Enter') addTodo();
+        });
+    
+        function addTodo() {
+          const todoText = document.getElementById('new-todo').value.trim();
+          if (!todoText) {
+            alert("Please enter a todo item!");
+            return;
           }
-      
-          // Load todos
-          loadTodos(userID);
-      
-          // Add event listener for "Add" button
-          document.getElementById('add-todo').addEventListener('click', () => {
-              const toDo = document.getElementById('new-todo').value.trim();
-      
-              console.log("userID from localStorage:", userID);
-              console.log("todo input value:", toDo);
-
-              if (!toDo) {
-                  alert("Please enter a todo item!");
-                  return;
-              }
-
-
-      
-              fetch('http://localhost:61002/add-todo', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({ userID, toDo })
-              })
-              .then(response => response.json())
-              .then(data => {
-                  console.log("✅ Server response:", data); // 🔍 Add this!
-                  
-                  alert(data.message);  
-                  if (data.success) {
-                      document.getElementById('new-todo').value = '';
-                      loadTodos(userID);
-                  }
-              })
-              .catch(error => {
-                  console.error('Error:', error);
-                  alert("Failed to add todo.");
-              });
+    
+          fetch('http://localhost:3307/add-todo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userID, toDo: todoText })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              createTodoItem(todoText, data.id);
+              document.getElementById('new-todo').value = '';
+            } else {
+              alert("Failed to add todo.");
+            }
+          })
+          .catch(error => {
+            console.error("Add todo error:", error);
+            alert("Failed to add todo.");
           });
-      });
-
-      
-      function loadTodos(userID) {
-        fetch(`http://localhost:61002/get-todos/${userID}`)
+        }
+    
+        function createTodoItem(todoText, todoID) {
+          const li = document.createElement('li');
+          li.textContent = todoText;
+    
+          const completeButton = document.createElement('button');
+          completeButton.textContent = 'Completed!';
+          completeButton.style.backgroundColor = 'green';
+    
+          completeButton.onclick = () => {
+            fetch(`http://localhost:3307/complete-todo/${todoID}`, {
+              method: 'PUT'
+            })
             .then(response => response.json())
             .then(data => {
-                const todoList = document.getElementById('todos');
-                todoList.innerHTML = '';
-    
-                data.forEach(todo => {
-                    const li = document.createElement('li');
-                    li.textContent = todo.toDo;
-    
-                    const completeButton = document.createElement('button');
-                    completeButton.textContent = 'Completed!';
-                    completeButton.style.backgroundColor = 'green';
-                    completeButton.onclick = () => completeTodo(todo.id, li);
-    
-                    li.appendChild(completeButton);
-                    todoList.appendChild(li);
-                });
+              if (data.success) {
+                document.getElementById('completed-todos').appendChild(li);
+                completeButton.remove();
+              } else {
+                alert("Failed to mark as completed.");
+              }
             })
-            .catch(error => console.error('Error loading todos:', error));
-    }
+            .catch(error => {
+              console.error("Complete error:", error);
+              alert("Error updating todo.");
+            });
+          };
     
-      </script>
+          li.appendChild(completeButton);
+          document.getElementById('todos').appendChild(li);
+        }
+    
+        function loadTodos(userID) {
+          fetch(`http://localhost:3307/get-todos/${userID}`)
+            .then(response => response.json())
+            .then(todos => {
+              const todoList = document.getElementById('todos');
+              const completedList = document.getElementById('completed-todos');
+              todoList.innerHTML = '';
+              completedList.innerHTML = '';
+    
+              todos.forEach(todo => {
+                if (todo.currStatus === 0) {
+                  createTodoItem(todo.toDo, todo.id);
+                } else {
+                  const li = document.createElement('li');
+                  li.textContent = todo.toDo;
+                  completedList.appendChild(li);
+                }
+              });
+            })
+            .catch(error => {
+              console.error("Load todos error:", error);
+            });
+        }
+    
+        document.getElementById('show').onclick = function () {
+          const completedList = document.getElementById('completed-todos');
+          if (completedList.style.display === "none" || completedList.classList.contains('hidden')) {
+            completedList.style.display = "block";
+            this.textContent = 'Hide';
+          } else {
+            completedList.style.display = "none";
+            this.textContent = 'Show';
+          }
+        };
+      });
+    </script>
+    
       
     
     

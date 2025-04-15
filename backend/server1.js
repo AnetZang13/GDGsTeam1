@@ -3,11 +3,13 @@ require('dotenv').config();
 const bcrypt = require('bcrypt');
 const express = require('express');
 const mysql = require('mysql2');
+const nodemailer = require("nodemailer");
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 
 const PORT = process.env.PORT;
+
 
 // Check if environment variables are loaded
 // console.log("Database Host:", process.env.DB_HOST);
@@ -19,6 +21,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded data
 
+
 // MySQL Database Configuration
 const db = mysql.createPool({
     host: process.env.DB_HOST,
@@ -28,6 +31,14 @@ const db = mysql.createPool({
     database: process.env.DB_NAME
 });
 
+// Nodemailer setup
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
 
 // Test the database connection
 db.getConnection((err, connection) => {
@@ -65,61 +76,60 @@ app.get('/signUp.html', (req, res) => {
 });
 
 
-// Dummy in-memory "database" of users
-let users = [];
-
+// Sign-up function
 // Sign-up function
 app.post('/signup', (req, res) => {
-    const { userID, userEmail, password, confirmPassword } = req.body;
+  const { userID, userEmail, password, confirmPassword } = req.body;
 
-    if (!userID || !userEmail || !password || !confirmPassword) {
-        return res.status(400).json({ message: "Missing email or password fields", success: false });
-    }
-    
-    if (password !== confirmPassword) {
-        return res.status(400).json({ message: "Passwords do not match", success: false });
-    }
+  if (!userID || !userEmail || !password || !confirmPassword) {
+      return res.status(400).json({ message: "Missing email or password fields", success: false });
+  }
+  
+  if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match", success: false });
+  }
 
-    // Check if the email already exists
-    const checkEmailSQL = "SELECT * FROM users WHERE userEmail = ?";
-    db.query(checkEmailSQL, [userEmail], (err, results) => {
-        if (err) {
-            console.error("Database error on checking email:", err);
-            return res.status(500).json({ message: "Database error", success: false });
-        }
-        
-        if (results.length > 0) {
-            return res.status(400).json({ message: "Email already exists", success: false });
-        }
+  // Check if the email already exists
+  const checkEmailSQL = "SELECT * FROM users WHERE userEmail = ?";
+  db.query(checkEmailSQL, [userEmail], (err, results) => {
+      if (err) {
+          console.error("Database error on checking email:", err);
+          return res.status(500).json({ message: "Database error", success: false });
+      }
+      
+      if (results.length > 0) {
+          return res.status(400).json({ message: "Email already exists", success: false });
+      }
 
-        // Check if the userID already exists
-        const checkUserSQL = "SELECT * FROM users WHERE userID = ?";
-    db.query(checkUserSQL, [userID], (err, results) => {
-        if (err) {
-                console.error("Database error on checking userID:", err);
-                return res.status(500).json({ message: "Database error", success: false });
-        }
-            
-        if (results.length > 0) {
-                return res.status(400).json({ message: "UserID already exists", success: false });
-        }
+      // Check if the userID already exists
+      const checkUserSQL = "SELECT * FROM users WHERE userID = ?";
+  db.query(checkUserSQL, [userID], (err, results) => {
+      if (err) {
+              console.error("Database error on checking userID:", err);
+              return res.status(500).json({ message: "Database error", success: false });
+      }
+          
+      if (results.length > 0) {
+              return res.status(400).json({ message: "UserID already exists", success: false });
+      }
 
-            // Insert new user (hash the password in production!)
-            bcrypt.hash(password, 10, (err, hash) => {
-                if (err) return res.status(500).json({ message: "Error hashing password", success: false });
-            
-                const insertSQL = "INSERT INTO users (userID, userEmail, password) VALUES (?, ?, ?)";
-                db.query(insertSQL, [userID, userEmail, hash], (err, result) => {
-                    if (err) {
-                        console.error("Error inserting user:", err);
-                        return res.status(500).json({ message: "Database error", success: false });
-                    }
-                    res.status(200).json({ message: "Sign-up successful", success: true });
-                });
-            })
-        });
-    });
+          // Insert new user (hash the password in production!)
+          bcrypt.hash(password, 10, (err, hash) => {
+              if (err) return res.status(500).json({ message: "Error hashing password", success: false });
+          
+              const insertSQL = "INSERT INTO users (userID, userEmail, password) VALUES (?, ?, ?)";
+              db.query(insertSQL, [userID, userEmail, hash], (err, result) => {
+                  if (err) {
+                      console.error("Error inserting user:", err);
+                      return res.status(500).json({ message: "Database error", success: false });
+                  }
+                  res.status(200).json({ message: "Sign-up successful", success: true });
+              });
+          })
+      });
+  });
 });
+
 
 
 
@@ -191,20 +201,30 @@ app.post('/add-todo', (req, res) => {
 
 app.post('/create_event', (req, res) => {
     const { userID, title, description, startTime, endTime, location, notes } = req.body;
-
+  
+    console.log("📩 Incoming event data:", req.body);
+  
     if (!userID || !title || !startTime) {
-        return res.status(400).json({ error: 'Missing required fields' });
+      console.warn("❗ Missing required fields");
+      return res.status(400).json({ error: 'Missing required fields' });
     }
-
-    const insertSQL = "INSERT INTO events (userID, title, description, startTime, endTime, location, notes) VALUES (?, ?, ?, ?, ?, ?, ?)";
+  
+    const insertSQL = `
+      INSERT INTO events (userID, title, description, startTime, endTime, location, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`;
+  
     db.query(insertSQL, [userID, title, description, startTime, endTime, location, notes], (err, result) => {
-        if (err) {
-            console.error('Error inserting event:', err);
-            return res.status(500).json({ error: 'Database error' });
-        }
-        res.json({ message: 'Event created successfully!', event_id: result.insertId });
+      if (err) {
+        console.error('❌ Error inserting event:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      console.log("✅ Event inserted with ID:", result.insertId);
+      res.json({ message: 'Event created successfully!', event_id: result.insertId });
     });
-});
+  });
+  
+
+
 
 
 // Mark Todo as Completed (`currStatus = 1`)
