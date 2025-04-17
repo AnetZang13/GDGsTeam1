@@ -1,12 +1,10 @@
-// Load content of html into the current file
 document.addEventListener("DOMContentLoaded", function () {
-  //Load in main container
   var appContainer = document.getElementById("app-container");
   if (!appContainer) {
     console.error("App container not found");
     return;
   }
-  //Load in main window (calendar & todo & add event)
+
   var mainContent = document.getElementById("main-content");
   if (!mainContent) {
     console.error("Main content container not found");
@@ -19,7 +17,20 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
-  // Implement FullCalendar
+  // Initialize Quill
+  var quill = new Quill("#quill-editor", {
+    theme: "snow",
+    modules: {
+      toolbar: [
+        ["bold", "italic", "underline"],
+        ["image"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ size: ["small", "large", "huge"] }],
+      ],
+    },
+  });
+
+  // Initialize FullCalendar
   var calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "dayGridMonth",
     height: "auto",
@@ -31,28 +42,85 @@ document.addEventListener("DOMContentLoaded", function () {
     views: {
       listDay: { buttonText: "List" },
     },
-    windowResize: function (view) {
+    windowResize: function () {
       if (window.innerWidth < 768) {
         calendar.changeView("listWeek");
       } else {
         calendar.changeView("dayGridMonth");
       }
     },
-
+    selectable: true,
+    events: [],
     eventClick: function (info) {
-      document.getElementById("info-title").textContent = info.event.title;
-      document.getElementById("info-start").textContent =
-        info.event.start.toLocaleString();
-      document.getElementById("info-end").textContent = info.event.end
-        ? info.event.end.toLocaleString()
-        : "N/A";
-      document.getElementById("info-description").innerHTML =
-        info.event.extendedProps.notes || "No notes";
-      document.getElementById("eventInfoModal").style.display = "block";
+      showEventPopup(info.event);
     },
   });
-
   calendar.render();
+
+  // Add Event Modal
+  var modal = document.getElementById("eventModal");
+  var btn = document.getElementById("open-modal");
+  var span = document.getElementsByClassName("close")[0];
+
+  btn.onclick = function () {
+    modal.style.display = "block";
+  };
+  span.onclick = function () {
+    modal.style.display = "none";
+  };
+  modal.onclick = function (event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  };
+
+  document.getElementById("add-event-button").onclick = function () {
+    const title = document.getElementById("event-title").value.trim();
+    const start = document.getElementById("event-start").value;
+    const end = document.getElementById("event-end").value;
+    const notes = quill.root.innerHTML;
+
+    if (title && start) {
+      calendar.addEvent({
+        title: title,
+        start: start,
+        end: end || null,
+        extendedProps: {
+          notes: notes,
+        },
+      });
+
+      // Clear fields
+      document.getElementById("event-title").value = "";
+      document.getElementById("event-start").value = "";
+      document.getElementById("event-end").value = "";
+      quill.setContents([]);
+
+      modal.style.display = "none";
+    } else {
+      alert("Please fill in event title and start time.");
+    }
+  };
+
+  // Event popup modal
+  function showEventPopup(event) {
+    document.getElementById("popup-title").textContent = event.title;
+    document.getElementById("popup-start").textContent = event.start.toLocaleString();
+    document.getElementById("popup-end").textContent = event.end ? event.end.toLocaleString() : "N/A";
+    document.getElementById("popup-notes").innerHTML = event.extendedProps.notes || "No notes.";
+
+    const popup = document.getElementById("eventPopup");
+    popup.style.display = "block";
+
+    document.querySelector(".close-popup").onclick = () => {
+      popup.style.display = "none";
+    };
+    window.onclick = function (e) {
+      if (e.target === popup) {
+        popup.style.display = "none";
+      }
+    };
+  }
 
   // Todo list
   const todoList = document.getElementById("todos");
@@ -61,10 +129,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const completedList = document.getElementById("completed-todos");
   const showButton = document.getElementById("show");
 
-  //Check if elements in todo list exist
   if (todoList && newTodoInput && addTodoButton) {
     addTodoButton.addEventListener("click", addTodo);
-    //If enter is pressed, new todo event is created
     newTodoInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
         addTodo();
@@ -72,10 +138,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function addTodo() {
-      //Remove spaces in text entered
       const todoText = newTodoInput.value.trim();
       if (todoText) {
-        //Create todo item and "Completed!" button
         const li = document.createElement("li");
         li.textContent = todoText;
         const deleteButton = document.createElement("button");
@@ -84,18 +148,13 @@ document.addEventListener("DOMContentLoaded", function () {
           completedList.appendChild(li);
           li.removeChild(deleteButton);
         });
-        //Add "Completed" and new item to todo list
         li.appendChild(deleteButton);
         todoList.appendChild(li);
-        //Clear input field
         newTodoInput.value = "";
       }
     }
-  } else {
-    console.error("Todo list elements not found");
   }
 
-  // Show/Hide completed items
   showButton.onclick = function () {
     if (
       completedList.style.display === "none" ||
@@ -109,87 +168,16 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
-  //Add event window
-  var modal = document.getElementById("eventModal");
-  var btn = document.getElementById("open-modal");
-  var span = document.getElementsByClassName("close")[0];
-
-  // Show the add event window
-  btn.onclick = function () {
-    modal.style.display = "block";
-  };
-
-  // Close the add event window
-  span.onclick = function () {
-    modal.style.display = "none";
-  };
-
-  // Close the add event window when clicking anywhere outside
-  modal.onclick = function (event) {
-    if (event.target == modal) {
-      modal.style.display = "none";
-    }
-  };
-
-  // Initialize Quill notepad
-  var quill = new Quill("#quill-editor", {
-    theme: "snow",
-    modules: {
-      toolbar: [
-        ["bold", "italic", "underline"],
-        ["image"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        [{ size: ["small", "large", "huge"] }],
-      ],
-    },
-  });
-
-  document.getElementById("add-event-button").onclick = function () {
-    const title = document.getElementById("event-title").value.trim();
-    const start = document.getElementById("event-start").value;
-    const end = document.getElementById("event-end").value;
-    const notes = quill.root.innerHTML;
-
-    if (title && start) {
-      //Check for null entry in title and start date
-      const event = {
-        title: title,
-        start: start,
-        end: end || null,
-        notes: notes,
-      };
-
-      calendar.addEvent(event);
-
-      //Clear entry fields
-      document.getElementById("event-title").value = "";
-      document.getElementById("event-start").value = "";
-      document.getElementById("event-end").value = "";
-      quill.setContents([]);
-
-      // Close the add event window
-      modal.style.display = "none";
-    } else {
-      alert("Please fill in event title and start time.");
-    }
-  };
-});
-
-/*Menu*/
-
-document.addEventListener("DOMContentLoaded", function () {
+  // Menu
   var menuButton = document.getElementById("menu-button");
   var menuList = document.getElementById("menu-list");
 
-  // Show the menu when the button is clicked
   menuButton.onclick = function (event) {
-    event.stopPropagation(); // Prevent affecting parent elements like the window
-    menuList.classList.toggle("hidden"); // If the window is closed, open it, and vise versa
+    event.stopPropagation();
+    menuList.classList.toggle("hidden");
   };
 
-  // Closing the menu when clicking anywhere outside of it in the window
   window.onclick = function (event) {
-    //checks if menu is visable and if the click does not occur on menu button
     if (
       !menuList.classList.contains("hidden") &&
       !menuButton.contains(event.target)
@@ -197,45 +185,4 @@ document.addEventListener("DOMContentLoaded", function () {
       menuList.classList.add("hidden");
     }
   };
-  // Handle close button (X) on event info modal
-  const closeInfoBtn = document.querySelector(".close-info");
-  if (closeInfoBtn) {
-    closeInfoBtn.onclick = function () {
-      document.getElementById("eventInfoModal").style.display = "none";
-    };
-  } else {
-    console.error("Close button not found");
-  }
-
-  // Close modal if click outside
-  window.onclick = function (event) {
-    const modal = document.getElementById("eventInfoModal");
-    if (event.target === modal) {
-      modal.style.display = "none";
-    }
-  };
 });
-
-// Modal close logic
-const closeInfoBtn = document.querySelector(".close-info");
-closeInfoBtn.onclick = function () {
-  document.getElementById("eventInfoModal").style.display = "none";
-};
-
-window.onclick = function (event) {
-  const modal = document.getElementById("eventInfoModal");
-  if (event.target === modal) {
-    modal.style.display = "none";
-  }
-  const closeInfoBtn = document.querySelector(".close-info");
-  closeInfoBtn.onclick = function () {
-    document.getElementById("eventInfoModal").style.display = "none";
-  };
-
-  window.onclick = function (event) {
-    const modal = document.getElementById("eventInfoModal");
-    if (event.target === modal) {
-      modal.style.display = "none";
-    }
-  };
-};
