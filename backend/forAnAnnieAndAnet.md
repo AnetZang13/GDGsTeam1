@@ -1,1 +1,0 @@
-Anet: this backend folder is for the server code (Good form is to probably have these files in the root folder, but I think this is more organized for now)

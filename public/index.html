@@ -1,62 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<!-- 
-   Meta data for index.html file
-   -->
-
 <head>
   <meta charset="UTF-8">
-  <!-- Make width and length adjust to window size -->
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
-  <!-- Link to CSS file -->
   <link rel="stylesheet" href="main.css">
-  <!-- Link to font-->
   <link href="https://fonts.googleapis.com/css?family=Jacques+Francois&display=swap" rel="stylesheet" />
-  <!-- Link to FullCalendar-->
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
-  <script src="script.js"></script>
-  <!-- Link to Quill (Text editing library) -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 </head>
 
-<!-- 
-Structure of elements for index.html:
--Header
--Menu
--Calendar. Todo, Add event
- -->
-
 <body>
-  <!-- Create main container-->
   <div id="app-container">
-    <!-- Create header-->
     <div id="header">
-      <!-- Create title "My Calendar"-->
       <h1 id="app-title">My Calendar</h1>
-      <!-- Create menu button-->
       <div id="menu-container">
         <button id="menu-button">Menu</button>
       </div>
     </div>
 
-                                                                                
-    <!-- Create a list of indexes for menu-->
     <div id="menu-list" class="hidden">
       <ul>
         <li><a href="login.html">Login page</a></li>
         <li><a href="index.html">Calendar</a></li>
         <li><a href="map.html">Campus Map</a></li>
-        <!-- <li><a href="#">Map</a></li> -->
+        <li><a href="my_preference.html">My Preference</a></li>
+        <li><a href="recommended_events.html">Recommended Events</a></li>
       </ul>
     </div>
-
-    <!-- Create main container for calendar, todo-list and add-event-->
 
     <div id="main-content">
       <div id="calendar"></div>
       <div id="todo-list">
+        <h2><img src="google-calendar.png" alt="Google Calendar Logo" class="logo" /> Load Event</h2>
+        <button id="load-event">Load Event</button>
         <h2>Todo List</h2>
         <ul id="todos"></ul>
         <input type="text" id="new-todo" placeholder="Add a new todo!">
@@ -67,155 +45,199 @@ Structure of elements for index.html:
         <h2>Add event</h2>
         <button id="open-modal">Add Event</button>
       </div>
-
     </div>
 
-    <!-- Create window  -->
     <div id="eventModal" class="modal">
       <div class="modal-content">
-        <!-- Create close button  -->
         <span class="close">&times;</span>
-        <!-- Create add event entry box -->
         <div class="form-group">
           <label for="event-title">Event name:</label>
           <input type="text" id="event-title" placeholder="Event Title" required>
         </div>
-        <!-- Create start time entry box -->
         <div class="form-group">
           <label for="event-start">Start time:</label>
           <input type="datetime-local" id="event-start" required>
         </div>
-        <!-- Create end time entry box -->
         <div class="form-group">
           <label for="event-end">End time:</label>
           <input type="datetime-local" id="event-end">
         </div>
-        <!-- Create note box with Quill -->
+        <div class="form-group">
+          <label for="event-location">Location:</label>
+          <input type="text" id="event-location" placeholder="Location" required>
+        </div>
+        <label><input type="checkbox" id="weekly-event">Weekly event</label>
+        <div class="form-group">
+          <label>Repeat on:</label><br>
+          <div class="form-group-box">
+            <input type="checkbox" id="monday" value="monday"><label for="monday">Monday</label>
+            <input type="checkbox" id="tuesday" value="tuesday"><label for="tuesday">Tuesday</label>
+            <input type="checkbox" id="wednesday" value="wednesday"><label for="wednesday">Wednesday</label>
+          </div>
+          <div class="form-group-box">
+            <input type="checkbox" id="thursday" value="thursday"><label for="thursday">Thursday</label>
+            <input type="checkbox" id="friday" value="friday"><label for="friday">Friday</label>
+            <input type="checkbox" id="saturday" value="saturday"><label for="saturday">Saturday</label>
+          </div>
+          <input type="checkbox" id="sunday" value="sunday"><label for="sunday">Sunday</label>
+        </div>
         <div class="form-group">
           <label for="event-notes">Notes:</label>
-          <div id="quill-editor"></div> <!-- Quill editor -->
+          <div id="quill-editor" style="height: 150px;"></div>
         </div>
-        <!-- Create add event button-->
-        <button id="add-event-button">Add Event</button>
+        <div id="button-frame">
+          <button id="add-event-button">Add Event</button>
+          <button id="delete-event-button">Delete Event</button>
+        </div>
       </div>
     </div>
-    
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const userID = localStorage.getItem('userID');
-        if (!userID) {
-          alert("You are not logged in!");
-          window.location.href = "login.html";
+
+    <div id="eventPopup" class="modal">
+      <div class="modal-content">
+        <span class="close-popup">&times;</span>
+        <h3 id="popup-title"></h3>
+        <p><strong>Start:</strong> <span id="popup-start"></span></p>
+        <p><strong>End:</strong> <span id="popup-end"></span></p>
+        <p><strong>Notes:</strong></p>
+        <div id="popup-notes"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      
+      const userID = localStorage.getItem('userID');
+      if (!userID) {
+        alert("You are not logged in!");
+        window.location.href = "login.html";
+        return;
+      }
+      const quill = new Quill('#quill-editor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [['bold', 'italic'], ['link'], [{ 'list': 'bullet' }]]
+        }
+      });
+
+      
+      // Load todos
+      loadTodos(userID);
+
+      document.getElementById('add-todo').addEventListener('click', addTodo);
+      document.getElementById('new-todo').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') addTodo();
+      });
+
+      function addTodo() {
+        const todoText = document.getElementById('new-todo').value.trim();
+        if (!todoText) {
+          alert("Please enter a todo item!");
           return;
         }
-    
-        // Load todos from DB
-        loadTodos(userID);
-    
-        document.getElementById('add-todo').addEventListener('click', addTodo);
-        document.getElementById('new-todo').addEventListener('keypress', function (e) {
-          if (e.key === 'Enter') addTodo();
-        });
-    
-        function addTodo() {
-          const todoText = document.getElementById('new-todo').value.trim();
-          if (!todoText) {
-            alert("Please enter a todo item!");
-            return;
+        fetch('http://localhost:3307/add-todo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userID, toDo: todoText })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            createTodoItem(todoText, data.id);
+            document.getElementById('new-todo').value = '';
+          } else {
+            alert("Failed to add todo.");
           }
-    
-          fetch('http://localhost:3307/add-todo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userID, toDo: todoText })
-          })
-          .then(response => response.json())
+        });
+      }
+
+      document.getElementById("add-event-button").addEventListener("click", () => {
+        const title = document.getElementById("event-title").value;
+        const startTime = document.getElementById("event-start").value;
+        const endTime = document.getElementById("event-end").value;
+        const location = document.getElementById("event-location").value;
+        const notes = quill.root.innerHTML;
+
+
+        if (!title || !startTime || !userID) {
+          alert("Missing required fields");
+          return;
+        }
+
+        fetch("http://localhost:3307/create_event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userID, title, description: "", startTime, endTime, location, notes }),
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.event_id) {
+            alert("Event added!");
+            document.getElementById("eventModal").style.display = "none";
+          } else {
+            alert("Failed to create event");
+          }
+        });
+      });
+
+      const modal = document.getElementById("eventModal");
+      const openBtn = document.getElementById("open-modal");
+      const closeBtn = document.querySelector(".close");
+
+      openBtn.onclick = () => { modal.style.display = "block"; };
+      closeBtn.onclick = () => { modal.style.display = "none"; };
+      window.onclick = (event) => { if (event.target === modal) modal.style.display = "none"; };
+
+      function createTodoItem(todoText, todoID) {
+        const li = document.createElement('li');
+        li.textContent = todoText;
+        const completeButton = document.createElement('button');
+        completeButton.textContent = 'Completed!';
+        completeButton.style.backgroundColor = 'green';
+        completeButton.onclick = () => {
+          fetch(`http://localhost:3307/complete-todo/${todoID}`, { method: 'PUT' })
+          .then(res => res.json())
           .then(data => {
             if (data.success) {
-              createTodoItem(todoText, data.id);
-              document.getElementById('new-todo').value = '';
+              document.getElementById('completed-todos').appendChild(li);
+              completeButton.remove();
             } else {
-              alert("Failed to add todo.");
+              alert("Failed to mark as completed.");
             }
-          })
-          .catch(error => {
-            console.error("Add todo error:", error);
-            alert("Failed to add todo.");
           });
-        }
-    
-        function createTodoItem(todoText, todoID) {
-          const li = document.createElement('li');
-          li.textContent = todoText;
-    
-          const completeButton = document.createElement('button');
-          completeButton.textContent = 'Completed!';
-          completeButton.style.backgroundColor = 'green';
-    
-          completeButton.onclick = () => {
-            fetch(`http://localhost:3307/complete-todo/${todoID}`, {
-              method: 'PUT'
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                document.getElementById('completed-todos').appendChild(li);
-                completeButton.remove();
-              } else {
-                alert("Failed to mark as completed.");
-              }
-            })
-            .catch(error => {
-              console.error("Complete error:", error);
-              alert("Error updating todo.");
-            });
-          };
-    
-          li.appendChild(completeButton);
-          document.getElementById('todos').appendChild(li);
-        }
-    
-        function loadTodos(userID) {
-          fetch(`http://localhost:3307/get-todos/${userID}`)
-            .then(response => response.json())
-            .then(todos => {
-              const todoList = document.getElementById('todos');
-              const completedList = document.getElementById('completed-todos');
-              todoList.innerHTML = '';
-              completedList.innerHTML = '';
-    
-              todos.forEach(todo => {
-                if (todo.currStatus === 0) {
-                  createTodoItem(todo.toDo, todo.id);
-                } else {
-                  const li = document.createElement('li');
-                  li.textContent = todo.toDo;
-                  completedList.appendChild(li);
-                }
-              });
-            })
-            .catch(error => {
-              console.error("Load todos error:", error);
-            });
-        }
-    
-        document.getElementById('show').onclick = function () {
-          const completedList = document.getElementById('completed-todos');
-          if (completedList.style.display === "none" || completedList.classList.contains('hidden')) {
-            completedList.style.display = "block";
-            this.textContent = 'Hide';
-          } else {
-            completedList.style.display = "none";
-            this.textContent = 'Show';
-          }
         };
-      });
-    </script>
-    
-      
-    
-    
-    
-    
+        li.appendChild(completeButton);
+        document.getElementById('todos').appendChild(li);
+      }
 
+      function loadTodos(userID) {
+        fetch(`http://localhost:3307/get-todos/${userID}`)
+        .then(res => res.json())
+        .then(todos => {
+          const todoList = document.getElementById('todos');
+          const completedList = document.getElementById('completed-todos');
+          todoList.innerHTML = '';
+          completedList.innerHTML = '';
+          todos.forEach(todo => {
+            if (todo.currStatus === 0) {
+              createTodoItem(todo.toDo, todo.id);
+            } else {
+              const li = document.createElement('li');
+              li.textContent = todo.toDo;
+              completedList.appendChild(li);
+            }
+          });
+        });
+      }
+
+      document.getElementById('show').onclick = function () {
+        const completedList = document.getElementById('completed-todos');
+        completedList.style.display = completedList.style.display === "none" ? "block" : "none";
+        this.textContent = completedList.style.display === "block" ? "Hide" : "Show";
+      };
+    });
+  </script>
+  <script src="script.js"></script>
 </body>
+
+</html>

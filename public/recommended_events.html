@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="main.css">
+  <!-- Link to font-->
+  <link href="https://fonts.googleapis.com/css?family=Jacques+Francois&display=swap" rel="stylesheet" />
+  <!-- Link to FullCalendar-->
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+  <script src="recommended_events.js"></script>
+  <title>Event recommendations</title>
+</head>
+
+<body>
+  <!-- Create main container-->
+  <div id="app-container">
+    <!-- Create header-->
+    <div id="header">
+      <!-- Create title "My Calendar"-->
+      <h1 id="app-title">Event recommendations</h1>
+      <!-- Create menu button-->
+      <div id="menu-container">
+        <button id="menu-button">Menu</button>
+      </div>
+    </div>
+    <!-- Create a list of indexes for menu-->
+    <div id="menu-list" class="hidden">
+      <ul>
+        <li><a href="login.html">Login page</a></li>
+        <li><a href="index.html">Calendar</a></li>
+        <li><a href="map.html">Campus Map</a></li>
+        <li><a href="my_preference.html">My Preference</a></li>
+        <li><a href="recommended_events.html">Recommended Events</a></li>
+      </ul>
+    </div>
+
+    <div id="main-content">
+      <div id="calendar"></div>
+    </div>
+    <div id="eventModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <a href="https://embark.mtholyoke.edu/abbeyhall/rsvp_boot?id=2141096" target="_parent">
+          <img src="screenshots/screenshot.png" alt="Event Preview" width="400" height="240">
+          <h3>Click to open link to event!</h3>
+        </a>
+        <button id="addButton">Add</button>
+      </div>
+    </div>
+
+
+  </div>
+  </div>
+
+
+</body>
+
+</html>

@@ -1,0 +1,115 @@
+/* General body styling */
+body {
+    background-color: white;
+    margin: 0;
+    padding: 0;
+    color: #4D4D4D;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+/* Header title */
+.header h1 {
+    color: rgba(73, 63, 38, 0.8); /* Adjusted to match the header text color from map */
+    margin: 0; /* Removed extra margin for better alignment */
+    font-family: 'Jacques Francois', serif !important; /* Consistent font */
+    font-size: 30px; /* Adjusted size for readability */
+    padding-top: 33px;
+    padding-left: 30px;
+}
+
+/* Preference grid container */
+.preference-grids-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 20px;
+    max-width: 1250px;
+    margin: 0 auto;
+    max-height: 77vh; /* Set a max height to allow scrolling */
+}
+
+/* Individual grid styling */
+.preference-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 20px;
+    max-width: 95%;
+    margin: 0 auto;
+}
+
+/* Styling for each preference item */
+.preference-item {
+    background-color: #F9F5EB;
+    padding: 40px 20px;
+    border-radius: 10px;
+    text-align: center;
+    position: relative;
+    font-size: 18px;
+    border: 1px solid #D9D3C9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: 250px; /* Ensure each item has a fixed height */
+    display: flex;  /* Center content vertically */
+    justify-content: center;
+    align-items: center;
+}
+
+/* Hover effect for preference items */
+.preference-item:hover {
+    background-color: #EDE8DF;
+}
+
+/* Circle indicator for preference items */
+.circle {
+    width: 20px;
+    height: 20px;
+    background-color: #C4C4C4;
+    border-radius: 50%;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+/* New class for checked state */
+.circle.checked {
+    background-color: green; /* Change color to indicate checked state */
+}
+
+#submit-button {
+    background-color: rgba(73, 63, 38, 0.5);
+    color: white;
+    border: none;
+    padding: 15px 20px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    position: fixed;
+    bottom: 10px;
+    right: 25px;
+}
+
+#submit-button:hover{
+    background-color: rgba(73, 63, 38, 0.7);
+}
+
+/* Placeholder background */
+.img-placeholder {
+    width: 150px;
+    height: 100px;
+    background-color: #D9D3C9; /* Light gray for visibility */
+    border-radius: 8px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Ensures images don’t overflow */
+}
+
+/* Image inside placeholder */
+.preference-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Keeps image contained */
+    position: absolute; /* Places image on top */
+}

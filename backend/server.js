@@ -1,176 +1,289 @@
-// merged the GoogleCalendarAPIIntegration.js with server.js
-// currently there are only codes for storing data into "events" and "todo" tables
-const fs = require('fs').promises;
-const path = require('path');
-const process = require('process');
-const { authenticate } = require('@google-cloud/local-auth');
-const { google } = require('googleapis');
-const mysql = require('mysql2/promise');
+require('dotenv').config();
+
+const bcrypt = require('bcrypt');
 const express = require('express');
+const mysql = require('mysql2');
+const nodemailer = require("nodemailer");
 const bodyParser = require('body-parser');
+const cors = require('cors');
+const path = require('path');
+
+const PORT = process.env.PORT;
+
+
+// Check if environment variables are loaded
+// console.log("Database Host:", process.env.DB_HOST);
+// console.log("Database User:", process.env.DB_USER);
+// console.log("Database Name:", process.env.DB_NAME);
 
 const app = express();
-const port = 3006;
-
-// Middleware to parse JSON requests
+app.use(cors());
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true })); // To parse URL-encoded data
 
-// Google API Scopes and File Paths
-const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-const TOKEN_PATH = path.join(process.cwd(), 'token.json');
-const CREDENTIALS_PATH = path.join(process.cwd(), 'GDGcredentials.json');
 
 // MySQL Database Configuration
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
+const db = mysql.createPool({
+    host: process.env.DB_HOST,
+    port: PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
 });
 
-db.connect((err) => {
-  if (err) {
-    console.error('Database connection failed: ' + err.stack);
-    return;
-  }
-  console.log('Connected to database.');
+// Nodemailer setup
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+// Test the database connection
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error("Database connection failed:", err);
+    } else {
+        console.log("Connected to MySQL database.");
+        connection.release(); // Release the connection back to the pool
+    }
 });
 
-// Load saved credentials if they exist
-async function loadSavedCredentialsIfExist() {
-  try {
-    const content = await fs.readFile(TOKEN_PATH);
-    const credentials = JSON.parse(content);
-    return google.auth.fromJSON(credentials);
-  } catch (err) {
-    return null;
-  }
-}
 
-// Save credentials after authorization
-async function saveCredentials(client) {
-  const content = await fs.readFile(CREDENTIALS_PATH);
-  const keys = JSON.parse(content);
-  const key = keys.installed || keys.web;
-  const payload = JSON.stringify({
-    type: 'authorized_user',
-    client_id: key.client_id,
-    client_secret: key.client_secret,
-    refresh_token: client.credentials.refresh_token,
+
+// Redirect the root path `/` to login.html 
+app.get('/', (req, res) => {
+  res.redirect('/login.html'); 
+});
+
+// Serve static files from the correct directory
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Route to serve login.html
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
+});
+
+// Route to serve index.html
+app.get('/index.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
+// Route to serve signUp.html
+app.get('/signUp.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'signUp.html'));
+});
+
+
+// Sign-up function
+// Sign-up function
+app.post('/signup', (req, res) => {
+  const { userID, userEmail, password, confirmPassword } = req.body;
+
+  if (!userID || !userEmail || !password || !confirmPassword) {
+      return res.status(400).json({ message: "Missing email or password fields", success: false });
+  }
+  
+  if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match", success: false });
+  }
+
+  // Check if the email already exists
+  const checkEmailSQL = "SELECT * FROM users WHERE userEmail = ?";
+  db.query(checkEmailSQL, [userEmail], (err, results) => {
+      if (err) {
+          console.error("Database error on checking email:", err);
+          return res.status(500).json({ message: "Database error", success: false });
+      }
+      
+      if (results.length > 0) {
+          return res.status(400).json({ message: "Email already exists", success: false });
+      }
+
+      // Check if the userID already exists
+      const checkUserSQL = "SELECT * FROM users WHERE userID = ?";
+  db.query(checkUserSQL, [userID], (err, results) => {
+      if (err) {
+              console.error("Database error on checking userID:", err);
+              return res.status(500).json({ message: "Database error", success: false });
+      }
+          
+      if (results.length > 0) {
+              return res.status(400).json({ message: "UserID already exists", success: false });
+      }
+
+          // Insert new user (hash the password in production!)
+          bcrypt.hash(password, 10, (err, hash) => {
+              if (err) return res.status(500).json({ message: "Error hashing password", success: false });
+          
+              const insertSQL = "INSERT INTO users (userID, userEmail, password) VALUES (?, ?, ?)";
+              db.query(insertSQL, [userID, userEmail, hash], (err, result) => {
+                  if (err) {
+                      console.error("Error inserting user:", err);
+                      return res.status(500).json({ message: "Database error", success: false });
+                  }
+                  res.status(200).json({ message: "Sign-up successful", success: true });
+              });
+          })
+      });
   });
-  await fs.writeFile(TOKEN_PATH, payload);
-}
+});
 
-// Authorize the user
-async function authorize() {
-  let client = await loadSavedCredentialsIfExist();
-  if (client) {
-    return client;
-  }
-  client = await authenticate({
-    scopes: SCOPES,
-    keyfilePath: CREDENTIALS_PATH,
-  });
-  if (client.credentials) {
-    await saveCredentials(client);
-  }
-  return client;
-}
 
-// Function to fetch Google Calendar events and store them in the database
-async function listEvents(auth) {
-  const calendar = google.calendar({ version: 'v3', auth });
-  const res = await calendar.events.list({
-    calendarId: 'primary',
-    timeMin: new Date().toISOString(),
-    maxResults: 5,
-    singleEvents: true,
-    orderBy: 'startTime',
-  });
 
-  const events = res.data.items;
 
-  if (!events || events.length === 0) {
-    console.log('No upcoming events found.');
-    return;
-  }
+// Login function
 
-  // Connect to the database
-  const connection = await mysql.createConnection(dbConfig);
+app.post('/login', (req, res) => {
+    const { userID, userEmail, password } = req.body;
 
-  console.log('Upcoming 5 events:');
-  for (const event of events) {
-    const title = event.summary || 'No title';
-    const description = event.description || 'No description';
+    if (!userID || !userEmail || !password) {
+        return res.status(400).json({ message: "Missing userID, email or password", success: false });
+    }
 
-    // Extract and format start time
-    const start = event.start.dateTime || event.start.date;
-    const splitStart = start.split('T');
-    const startDate = splitStart[0];
-    const startTime = splitStart[1]?.split('-')[0] || '';
+    const sql = "SELECT * FROM users WHERE userID = ? AND userEmail = ?";
+    db.query(sql, [userID, userEmail], (err, results) => {
+        if (err) {
+            console.error("Database error on login:", err);
+            return res.status(500).json({ message: "Database error", success: false });
+        }
 
-    // Extract and format end time
-    const end = event.end.dateTime || event.end.date;
-    const splitEnd = end.split('T');
-    const endDate = splitEnd[0];
-    const endTime = splitEnd[1]?.split('-')[0] || '';
+        if (results.length === 0) {
+            return res.status(401).json({ message: "Invalid credentials", success: false });
+        }
 
-    const location = event.location || 'No location provided';
+        // Compare the entered password with the hashed password stored in the database
+        const storedHashedPassword = results[0].password;
+        bcrypt.compare(password, storedHashedPassword, (err, isMatch) => {
+            if (err) {
+                console.error("Error comparing passwords:", err);
+                return res.status(500).json({ message: "Error checking password", success: false });
+            }
 
-    console.log({ title, startTime, startDate, endTime, endDate, location, description });
+            if (isMatch) {
+                return res.status(200).json({ 
+                    message: "Login successful", 
+                    userID: results[0].userID,
+                    success: true 
+                });
+            } else {
+                return res.status(401).json({ message: "Invalid credentials", success: false });
+            }
+        });
+    });
+});
 
-    // Insert event into the database
-    await connection.execute(
-      'INSERT INTO events (startTime, startDate, endTime, endDate, title, location, description) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [startTime, startDate, endTime, endDate, title, location, description]
+
+
+// **Add a Todo (Default `currStatus = 0` for Incomplete)**
+app.post('/add-todo', (req, res) => {
+    const { userID, toDo } = req.body;
+
+    if (!userID || !toDo) {
+        return res.status(400).json({ message: "Missing userID or todo", success: false });
+    }
+
+    const insertSQL = "INSERT INTO todo (userID, toDo, currStatus) VALUES (?, ?, 0)";
+    
+    console.log(`Executing Query: ${insertSQL} | Values: ${userID}, ${toDo}`);
+
+    db.query(insertSQL, [userID, toDo], (err, result) => {
+        if (err) {
+            console.error("Error inserting todo:", err);
+            return res.status(500).json({ message: 'Database error', success: false });
+        } 
+
+        console.log("Todo Added! Insert ID:", result.insertId);
+        res.json({ message: 'Todo added successfully.', id: result.insertId, success: true });
+    });
+});
+
+
+
+
+
+// Mark Todo as Completed (`currStatus = 1`)
+app.put('/complete-todo/:id', (req, res) => {
+    const todoID = req.params.id;
+
+    console.log(`Updating todo ID: ${todoID}`); 
+    const sql = 'UPDATE todo SET currStatus = 1 WHERE id = ?';
+
+    db.query(sql, [todoID], (err, result) => {
+        if (err) {
+            console.error("Error updating todo:", err);
+            res.status(500).json({ message: 'Database error', success: false });
+            return;
+        }
+
+        console.log("Update result:", result);
+
+        if (result.affectedRows > 0) {
+            res.json({ message: 'Todo marked as completed!', success: true });
+        } else {
+            res.json({ message: 'Todo not found', success: false });
+        } 
+    });
+});
+
+
+
+// **Fetch Todos for a Specific User**
+app.get('/get-todos/:userID', (req, res) => {
+    const userID = req.params.userID;
+
+    if (!userID) {
+        return res.status(400).json({ message: "Missing userID", success: false });
+    }
+
+    const sql = "SELECT * FROM todo WHERE userID = ?";
+    db.query(sql, [userID], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ message: "Database error", success: false });
+        }
+        res.json(result);
+    });
+});
+
+// Create Event
+app.post("/create_event", (req, res) => {
+    const { userID, title, description, startTime, endTime, location, notes } =
+      req.body;
+    if (!userID || !title || !startTime)
+      return res.status(400).json({ error: "Missing fields" });
+  
+    const sql =
+      "INSERT INTO events (userID, title, description, startTime, endTime, location, notes) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    db.query(
+      sql,
+      [userID, title, description, startTime, endTime, location, notes],
+      (err, result) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+        res.json({ message: "Event created", event_id: result.insertId });
+      }
     );
-  }
-
-  console.log('Events saved to the database!');
-  await connection.end();
-}
-
-// (TO-do) API Endpoint to add a to-do item to the database
-app.post('/add-todo', async (req, res) => {
-  const { userID, toDo, currStatus } = req.body;
-
-  if (!userID || !toDo) {
-    return res.status(400).json({ error: 'userID and toDo are required' });
-  }
-
-  try {
-    const connection = await mysql.createConnection(dbConfig);
-    await connection.execute(
-      'INSERT INTO todo (userID, toDo, currStatus) VALUES (?, ?, ?)',
-      [userID, toDo, currStatus || 0]  // Default to 0 (incomplete)
+  });
+  
+  // Get Events
+  app.get("/get-events/:userID", (req, res) => {
+    const userID = req.params.userID;
+    db.query(
+      "SELECT * FROM events WHERE userID = ?",
+      [userID],
+      (err, results) => {
+        if (err)
+          return res
+            .status(500)
+            .json({ message: "Database error", success: false });
+        res.json(results);
+      }
     );
-    await connection.end();
+  });
 
-    res.status(201).json({ message: 'To-do item added successfully!' });
-  } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ error: 'Database connection failed' });
-  }
+
+//Start the Server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-// API Endpoint to fetch all to-do items from the database
-app.get('/todos', async (req, res) => {
-  try {
-    const connection = await mysql.createConnection(dbConfig);
-    const [rows] = await connection.execute('SELECT * FROM todo');
-    await connection.end();
-
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching todos:', error);
-    res.status(500).json({ error: 'Failed to fetch to-do items' });
-  }
-});
-
-// Start the Express server
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
-
-// Fetch Google Calendar events and save them to the database
-authorize().then(listEvents).catch(console.error);

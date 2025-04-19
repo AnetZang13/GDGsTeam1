@@ -43,6 +43,26 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   calendar.render();
 
+  const userID = localStorage.getItem("userID");
+
+fetch(`http://localhost:3307/get-events/${userID}`)
+  .then(res => res.json())
+  .then(events => {
+    events.forEach(event => {
+      calendar.addEvent({
+        title: event.title,
+        start: event.startTime,
+        end: event.endTime,
+        extendedProps: {
+          location: event.location,
+          notes: event.notes
+        }
+      });
+    });
+  })
+  .catch(err => console.error("Failed to load events:", err));
+
+
   // Todo list 
   const todoList = document.getElementById('todos');
   const newTodoInput = document.getElementById('new-todo');
